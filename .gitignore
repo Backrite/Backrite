@@ -1,0 +1,10 @@
+# Node.js dependencies
+client/node_modules
+server/node_modules
+
+# dotenv files
+client/.env
+server/.env
+
+# build folders (if any)
+client/build
