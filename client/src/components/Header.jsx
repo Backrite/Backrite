@@ -12,12 +12,13 @@ function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+
+  
   const navLinks = [
-    { name: "Challenges", to: "/challenges" },
-    { name: "Practice", to: "/practice" },
-    { name: "Leaderboard", to: "/leaderboard" },
-    { name: "Community", to: "/community" },
-    { name: "Docs", to: "/docs" },
+    { name: "Home", to: "/" },
+  { name: "Dashboard", to: "/dashboard" },
+  { name: "Problems", to: "/problems" },
+  { name: "Docs", to: "/docs" },
   ];
 
   return (
