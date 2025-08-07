@@ -1,12 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import router from './routes/authroutes.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const app = express()
+const app = express();
 
-// Test Route
+// Routes
+app.use('/api/auth', router);
+
+// Test route
 app.get('/', (req, res) => {
-  res.send('Backrite backend is running!');
+  res.send(' Backrite backend is running!');
 });
 
-module.exports = app;
+export default app;
