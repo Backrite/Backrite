@@ -6,7 +6,8 @@ dotenv.config();
 const app = express();
 
 // Routes
-app.use('/api/auth', router);
+app.use('/user', router);
+
 
 // Test route
 app.get('/', (req, res) => {

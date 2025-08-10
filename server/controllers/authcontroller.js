@@ -1,46 +1,99 @@
-import User from '../models/User.js';
-import { hash, compare } from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-const { sign } = jwt;
+import asyncHandler from 'express-async-handler';
+import userModel from "../models/User.js";
+import bcrypt from "bcrypt";
+import jwt  from "jsonwebtoken";
 
-export const register = async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    const existingUser = await findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-    const hashedPassword = await hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword });
+//@desc Register user
+//@route POST /api/auth/register
+const registerAccount = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
 
-    await newUser.save();
-
-    const token = sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
-
-    res.status(201).json({ token, user: { id: newUser._id, name: newUser.name, email: newUser.email } });
-  } catch (err) {
-    res.status(500).json({ message: 'Something went wrong', error: err.message });
+  if (!username || !email || !password) {
+    res.status(400);
+    throw new Error("Please fill all the fields");
   }
-};
+  const emailExists = await userModel.findOne({email});
+  const usernameExists = await userModel.findOne({username});
 
-export const login = async (req, res) => {
+  if(usernameExists || emailExists){
+    res.status(400);
+    throw new Error("User already exits");
+  }
+  //Hash password
+  const hashedPassword = await bcrypt.hash(password,10);
+  const user = await userModel.create({
+    username,
+    email,
+    password: hashedPassword
+  });
+  if(user){
+    res.status(201).json({_id:user._id,email:user.email});
+  }{
+    res.status(400);
+    throw new Error("invlid user");
+  }
+});
+
+// @desc Get account
+// @route GET /api/auth/account
+// @access Private
+const getAccount = asyncHandler(async (req, res) => {
+  // req.user is set in validateToken middleware
+  const user = await userModel.findById(req.user.id).select("-password");
+  
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200).json(user);
+});
+
+// @desc Login account
+// @route POST /api/auth/login
+const loginAccount = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  try {
-    const user = await findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const isMatch = await compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-
-    const token = sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
-
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
-  } catch (err) {
-    res.status(500).json({ message: 'Something went wrong', error: err.message });
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Please fill all the fields");
   }
-};
 
-export default { register, login };
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid credentials");
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (passwordMatch) {
+    const token = jwt.sign(
+      {
+        user: {
+          name: user.username,
+          email: user.email,
+          id: user._id,
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "2d" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.username,
+        email: user.email,
+      },
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid credentials");
+  }
+});
+
+export { registerAccount, getAccount, loginAccount };
