@@ -24,7 +24,7 @@ function App() {
         {/* <ProblemSolve /> */}
         {/* <Dashboard /> */}
         {/* <Problems /> */}
-        <SignUp />
+        {/* <SignUp /> */}
       </div>
     </>
   );
