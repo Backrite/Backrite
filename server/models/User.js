@@ -14,6 +14,18 @@ const userSchema = new Schema({
     type: String,
     required: [true, 'Password is required'],
   },
+  solvedProblems: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Problem',
+    }
+  ],
+  attemptedProblems: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Problem',
+    }
+  ],
 }, { timestamps: true });
 
 export default model('User', userSchema);
