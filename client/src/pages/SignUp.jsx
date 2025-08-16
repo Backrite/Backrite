@@ -72,25 +72,46 @@ const SignUp = ({ setCurrentPage, setUser }) => {
     e.preventDefault();
 
     if (!validateForm()) return;
-
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ api: data.message || "Signup failed" });
+        setIsLoading(false);
+        return;
+      }
+
+      // If success -> save user & token
       const newUser = {
-        ...mockUser,
-        name: formData.fullName,
-        email: formData.email,
+        name: data.user.fullName,
+        email: data.user.email,
         avatar: formData.fullName
           .split(" ")
           .map((n) => n[0])
           .join("")
           .toUpperCase(),
       };
+
+      localStorage.setItem("token", data.token); // Store JWT
       setUser(newUser);
       setCurrentPage("dashboard");
+    } catch (error) {
+      setErrors({ api: "Network error. Please try again." });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getPasswordStrength = () => {
