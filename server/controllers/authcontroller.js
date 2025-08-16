@@ -8,9 +8,17 @@ import jwt from "jsonwebtoken";
 const registerAccount = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
+  if (!username) {
     res.status(400);
-    throw new Error("Please fill all the fields");
+    throw new Error("Please fill username the fields");
+  }
+  if (!email) {
+    res.status(400);
+    throw new Error("Please fill email the fields");
+  }
+  if (!password) {
+    res.status(400);
+    throw new Error("Please fill password the fields");
   }
   const emailExists = await userModel.findOne({ email });
   const usernameExists = await userModel.findOne({ username });
@@ -28,8 +36,7 @@ const registerAccount = asyncHandler(async (req, res) => {
   });
   if (user) {
     res.status(201).json({ _id: user._id, email: user.email });
-  }
-  {
+  } else {
     res.status(400);
     throw new Error("invlid user");
   }
