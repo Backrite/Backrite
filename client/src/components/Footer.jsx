@@ -1,3 +1,4 @@
+// src/components/Footer.jsx
 import React, { useState } from "react";
 import {
   Code,
@@ -9,7 +10,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-function Footer() {
+function Footer({ showNewsletter = false }) {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -23,48 +24,50 @@ function Footer() {
   };
 
   return (
-    <footer className="bg-gray-950 border-t border-gray-800">
-      {/* Newsletter Section */}
-      <div className="border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-3xl font-bold text-white mb-4">
-              Stay ahead of the curve
-            </h3>
-            <p className="text-lg text-gray-400 mb-8">
-              Get the latest challenges, tips, and industry insights delivered
-              weekly.
-            </p>
-
-            <form
-              onSubmit={handleSubscribe}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 justify-center"
-              >
-                {isSubscribed ? "Subscribed!" : "Subscribe"}
-                {!isSubscribed && <ArrowRight className="w-4 h-4" />}
-              </button>
-            </form>
-
-            {isSubscribed && (
-              <p className="mt-4 text-green-400 font-medium">
-                Thanks for subscribing! Check your email for confirmation.
+    <footer className="bg-gray-950 border-t border-gray-800 mt-auto">
+      {/* Newsletter Section - Only show when showNewsletter is true */}
+      {showNewsletter && (
+        <div className="border-b border-gray-800">
+          <div className="max-w-6xl mx-auto px-6 py-16">
+            <div className="max-w-2xl mx-auto text-center">
+              <h3 className="text-3xl font-bold text-white mb-4">
+                Stay ahead of the curve
+              </h3>
+              <p className="text-lg text-gray-400 mb-8">
+                Get the latest challenges, tips, and industry insights delivered
+                weekly.
               </p>
-            )}
+
+              <form
+                onSubmit={handleSubscribe}
+                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              >
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 justify-center"
+                >
+                  {isSubscribed ? "Subscribed!" : "Subscribe"}
+                  {!isSubscribed && <ArrowRight className="w-4 h-4" />}
+                </button>
+              </form>
+
+              {isSubscribed && (
+                <p className="mt-4 text-green-400 font-medium">
+                  Thanks for subscribing! Check your email for confirmation.
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Footer */}
       <div className="max-w-6xl mx-auto px-6 py-12">

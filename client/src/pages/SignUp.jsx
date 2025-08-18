@@ -1,7 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from "lucide-react";
 
-const SignUp = ({ setCurrentPage, setUser }) => {
+const SignUp = ({ setUser }) => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -13,15 +16,6 @@ const SignUp = ({ setCurrentPage, setUser }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-
-  const mockUser = {
-    name: "Alex Developer",
-    email: "alex@example.com",
-    avatar: "AD",
-    solved: 0,
-    inProgress: 0,
-    streak: 0,
-  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -72,25 +66,46 @@ const SignUp = ({ setCurrentPage, setUser }) => {
     e.preventDefault();
 
     if (!validateForm()) return;
-
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ api: data.message || "Signup failed" });
+        setIsLoading(false);
+        return;
+      }
+
+      // ✅ Make sure backend returns correct field
       const newUser = {
-        ...mockUser,
-        name: formData.fullName,
-        email: formData.email,
+        username: data.user.fullName || data.user.username,
+        email: data.user.email,
         avatar: formData.fullName
           .split(" ")
           .map((n) => n[0])
           .join("")
           .toUpperCase(),
       };
+
+      localStorage.setItem("token", data.token); // Store JWT
       setUser(newUser);
-      setCurrentPage("dashboard");
+      navigate("/dashboard"); // ✅ Go to dashboard
+    } catch (error) {
+      setErrors({ api: "Network error. Please try again." });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getPasswordStrength = () => {
@@ -129,7 +144,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
         {/* Sign Up Form */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8">
           <div className="space-y-6">
-            {/* Full Name Field */}
+            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Full Name
@@ -157,7 +172,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
               )}
             </div>
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
@@ -183,7 +198,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
               )}
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Password
@@ -240,7 +255,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
               )}
             </div>
 
-            {/* Confirm Password Field */}
+            {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Confirm Password
@@ -288,7 +303,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
               )}
             </div>
 
-            {/* Terms and Conditions */}
+            {/* Terms */}
             <div>
               <label className="flex items-start gap-3">
                 <input
@@ -317,7 +332,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={isLoading}
@@ -339,7 +354,7 @@ const SignUp = ({ setCurrentPage, setUser }) => {
         <div className="text-center mt-6">
           <span className="text-gray-400">Already have an account? </span>
           <button
-            onClick={() => setCurrentPage("signin")}
+            onClick={() => navigate("/signin")}
             className="text-blue-400 hover:text-blue-300 font-medium"
           >
             Sign in here

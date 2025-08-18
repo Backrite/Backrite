@@ -10,22 +10,10 @@ import Dashboard from "./pages/Dashboard";
 import Problems from "./pages/Problems";
 import ProblemSolve from "./pages/ProblemSolve";
 import "./index.css";
+import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        {/* All routes under shared Layout */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="signin" element={<SignIn />} />
-          <Route path="signup" element={<SignUp />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="problems" element={<Problems />} />
-          <Route path="solve/:problemId" element={<ProblemSolve />} />
-          
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
 );
