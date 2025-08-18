@@ -100,7 +100,7 @@ const SignUp = ({ setUser }) => {
 
       localStorage.setItem("token", data.token); // Store JWT
       setUser(newUser);
-      navigate("/dashboard"); // ✅ Go to dashboard
+      navigate("/problems");
     } catch (error) {
       setErrors({ api: "Network error. Please try again." });
     } finally {
