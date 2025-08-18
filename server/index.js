@@ -5,6 +5,10 @@ import authRoutes from "./routes/authroutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import cors from "cors";
+import errorHandler from "./middleware/errorHandler.js"; // 👈 import
+
+dotenv.config();
+connectDb();
 
 const app = express();
 
@@ -20,21 +24,14 @@ app.use(
   })
 );
 
-dotenv.config();
-connectDb();
-const port = process.env.PORT || 5001;
-//middleware
-app.use(express.json());
-
-// Auth routes /api/auth
+// Routes
 app.use("/api/auth", authRoutes);
-
-// Problem routes /api/problems
 app.use("/api/problems", problemRoutes);
-
-//Dashboard routes /api/dashboard
 app.use("/api/dashboard", dashboardRoutes);
 
+app.use(errorHandler);
+
+const port = process.env.PORT || 5001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

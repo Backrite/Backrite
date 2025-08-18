@@ -1,32 +1,52 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
 import Home from "./pages/Home";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import ProblemSolve from "./pages/ProblemSolve";
-import Dashboard from "./pages/Dashboard";
-import Problems from "./pages/Problems";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
+import Problems from "./pages/Problems";
+import ProblemSolve from "./pages/ProblemSolve";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [user, setUser] = useState(null);
+  const [problems, setProblems] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/problems")
+      .then((res) => res.json())
+      .then((data) => {
+        setProblems(data);
+        console.log("Problems fetched:", data); // log actual fetched data
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
 
   return (
-    <>
-      <div>
-        {/* <Header />
-        <Home />
-        <Footer /> */}
-
-        {/* <ProblemSolve /> */}
-        {/* <Dashboard /> */}
-        {/* <Problems /> */}
-        {/* <SignUp /> */}
-      </div>
-    </>
+    <BrowserRouter>
+      <Routes>
+        {/* All routes under shared Layout */}
+        <Route path="/" element={<Layout user={user} setUser={setUser} />}>
+          <Route index element={<Home />} />
+          <Route path="signin" element={<SignIn setUser={setUser} />} />
+          <Route path="signup" element={<SignUp setUser={setUser} />} />
+          <Route path="dashboard" element={<Dashboard user={user} />} />
+          <Route path="problems" element={<Problems problems={problems} />} />
+          <Route path="solve/:problemId" element={<ProblemSolve />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

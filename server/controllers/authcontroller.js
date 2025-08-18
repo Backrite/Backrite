@@ -35,7 +35,11 @@ const registerAccount = asyncHandler(async (req, res) => {
     password: hashedPassword,
   });
   if (user) {
-    res.status(201).json({ _id: user._id, email: user.email });
+    let token = jwt.sign(
+      { email, id: user._id },
+      process.env.ACCESS_TOKEN_SECRET
+    );
+    return res.status(200).json({ token, user });
   } else {
     res.status(400);
     throw new Error("invlid user");
@@ -88,15 +92,7 @@ const loginAccount = asyncHandler(async (req, res) => {
       { expiresIn: "2d" }
     );
 
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.username,
-        email: user.email,
-      },
-    });
+    return res.status(200).json({ token, user });
   } else {
     res.status(400);
     throw new Error("Invalid credentials");

@@ -1,18 +1,9 @@
 import React, { useState } from "react";
-import {
-  CheckCircle,
-  Play,
-  Shield,
-  Database,
-  Key,
-  Upload,
-  FileText,
-  Users,
-  Activity,
-  Filter,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CheckCircle, Play, Filter } from "lucide-react";
 
-const Problems = ({ problems, setSelectedProblem, setCurrentPage }) => {
+const Problems = ({ problems }) => {
+  const navigate = useNavigate();
   const [filterDifficulty, setFilterDifficulty] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
@@ -42,8 +33,7 @@ const Problems = ({ problems, setSelectedProblem, setCurrentPage }) => {
     }) || [];
 
   const handleSolveProblem = (problem) => {
-    setSelectedProblem(problem);
-    setCurrentPage("solve");
+    navigate(`/solve/${problem._id}`);
   };
 
   return (
@@ -87,41 +77,11 @@ const Problems = ({ problems, setSelectedProblem, setCurrentPage }) => {
           </select>
         </div>
 
-        {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-white">
-              {problems?.length || 0}
-            </div>
-            <div className="text-gray-400 text-sm">Total Problems</div>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-400">
-              {problems?.filter((p) => p.completed).length || 0}
-            </div>
-            <div className="text-gray-400 text-sm">Completed</div>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700  rounded-lg p-4">
-            <div className="text-2xl font-bold text-yellow-400">
-              {problems?.filter((p) => !p.completed).length || 0}
-            </div>
-            <div className="text-gray-400 text-sm">Remaining</div>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-400">
-              {problems
-                ?.filter((p) => p.completed)
-                .reduce((sum, p) => sum + p.points, 0) || 0}
-            </div>
-            <div className="text-gray-400 text-sm">Points Earned</div>
-          </div>
-        </div>
-
         {/* Problems Grid */}
         <div className="grid gap-6">
           {filteredProblems.map((problem) => (
             <div
-              key={problem.id}
+              key={problem._id}
               className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-blue-500/50 transition-all hover:shadow-xl hover:shadow-blue-500/10"
             >
               <div className="flex items-start justify-between">
@@ -203,80 +163,6 @@ const Problems = ({ problems, setSelectedProblem, setCurrentPage }) => {
             </button>
           </div>
         )}
-
-        {/* Challenge Categories */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            Challenge Categories
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <Shield className="w-6 h-6 text-blue-400" />
-                <h3 className="font-semibold text-white">
-                  Authentication & Security
-                </h3>
-              </div>
-              <p className="text-gray-400 text-sm">
-                JWT, OAuth, Rate Limiting, RBAC
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                {
-                  problems?.filter((p) =>
-                    p.tags?.some((tag) =>
-                      ["Authentication", "Security", "JWT", "RBAC"].includes(
-                        tag
-                      )
-                    )
-                  ).length
-                }{" "}
-                challenges
-              </div>
-            </div>
-
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <Database className="w-6 h-6 text-green-400" />
-                <h3 className="font-semibold text-white">Database & APIs</h3>
-              </div>
-              <p className="text-gray-400 text-sm">
-                CRUD, MongoDB, REST APIs, Pagination
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                {
-                  problems?.filter((p) =>
-                    p.tags?.some((tag) =>
-                      ["Database", "CRUD", "MongoDB", "REST API"].includes(tag)
-                    )
-                  ).length
-                }{" "}
-                challenges
-              </div>
-            </div>
-
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <Activity className="w-6 h-6 text-purple-400" />
-                <h3 className="font-semibold text-white">
-                  Backend Infrastructure
-                </h3>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Logging, Error Handling, File Upload
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                {
-                  problems?.filter((p) =>
-                    p.tags?.some((tag) =>
-                      ["Logging", "Error Handling", "File Upload"].includes(tag)
-                    )
-                  ).length
-                }{" "}
-                challenges
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

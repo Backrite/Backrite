@@ -1,25 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Code, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
-function Header() {
+function Header({ user, setUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Track scroll for header bg
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  
-  const navLinks = [
-    { name: "Home", to: "/" },
-  { name: "Dashboard", to: "/dashboard" },
-  { name: "Problems", to: "/problems" },
-  { name: "Docs", to: "/docs" },
-  ];
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
+    navigate("/");
+  };
+
+  const navLinks = user
+    ? [
+        { name: "Problems", to: "/problems" },
+        { name: "Docs", to: "/docs" },
+      ]
+    : [
+        { name: "Home", to: "/" },
+        { name: "Problems", to: "/problems" },
+        { name: "Docs", to: "/docs" },
+      ];
 
   return (
     <header
@@ -43,12 +68,16 @@ function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-12">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.to}
-                className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-200 relative group"
+                className={`text-gray-300 hover:text-white text-lg font-medium transition-colors duration-200 relative group ${
+                  location.pathname === link.to
+                    ? "text-white font-semibold"
+                    : ""
+                }`}
               >
                 {link.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-200"></span>
@@ -56,20 +85,52 @@ function Header() {
             ))}
           </nav>
 
-          {/* Desktop CTA Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <Link
-              to="/signin"
-              className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-200"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200"
-            >
-              Get started
-            </Link>
+          {/* Right Side */}
+          <div className="hidden lg:flex items-center space-x-4 relative">
+            {!user ? (
+              <>
+                <Link
+                  to="/signin"
+                  className="text-gray-300 hover:text-white text-base font-medium transition-colors duration-200"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-base font-medium transition-all duration-200"
+                >
+                  Get started
+                </Link>
+              </>
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                {/* Avatar Circle (click to toggle) */}
+                <div
+                  className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer"
+                  onClick={() => setShowDropdown(!showDropdown)}
+                >
+                  {user.username ? user.username.charAt(0).toUpperCase() : "U"}
+                </div>
+
+                {/* Dropdown */}
+                {showDropdown && (
+                  <div className="absolute right-0 mt-2 w-44 bg-gray-900 border border-gray-700 rounded-md shadow-lg">
+                    <Link
+                      to="/dashboard"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -83,47 +144,6 @@ function Header() {
               <Menu className="w-5 h-5" />
             )}
           </button>
-        </div>
-
-        {/* Mobile Menu */}
-        <div
-          className={`lg:hidden transition-all duration-300 overflow-hidden ${
-            isMenuOpen ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg border border-gray-800 p-4">
-            {/* Nav Links */}
-            <nav className="space-y-1 mb-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.to}
-                  className="block text-gray-300 hover:text-white hover:bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Buttons */}
-            <div className="flex flex-col gap-3 border-t border-gray-800 pt-4">
-              <Link
-                to="/signin"
-                className="w-full bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium text-center transition-all duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/signup"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium text-center transition-all duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Get started
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </header>
