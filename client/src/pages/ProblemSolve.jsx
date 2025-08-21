@@ -56,19 +56,26 @@ const ProblemSolve = () => {
     }
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     setIsRunning(true);
     setOutput("Running your code...\n");
 
-    setTimeout(() => {
-      const mockOutput = `✓ Code executed successfully\n\nTest Results:\n✓ Basic functionality passed\n✓ Edge cases passed`;
-      setOutput(mockOutput);
-      setTestResults([
-        { name: "Basic Functionality", status: "passed", points: 50 },
-        { name: "Edge Cases", status: "passed", points: 50 },
-      ]);
-      setIsRunning(false);
-    }, 1500);
+    try {
+      const response = await fetch("http://localhost:5000/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }), // send code state to backend
+      });
+
+      const data = await response.json();
+
+      setOutput(data.output); // backend returns the execution result
+      setTestResults(data.testResults || []); // if backend sends test results
+    } catch (error) {
+      setOutput("Error running code: " + error.message);
+    }
+
+    setIsRunning(false);
   };
 
   const submitSolution = () => {
