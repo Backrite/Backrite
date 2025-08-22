@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import MonacoEditor from "@monaco-editor/react";
 import {
   ArrowLeft,
@@ -9,6 +8,8 @@ import {
   Clock,
   RefreshCw,
   Send,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 const ProblemSolve = () => {
@@ -21,17 +22,21 @@ const ProblemSolve = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
 
+  const [showConstraints, setShowConstraints] = useState(true);
+  const [showExamples, setShowExamples] = useState(true);
+
   const { problemId } = useParams();
 
-  // Fetch problem details
   useEffect(() => {
     fetch(`http://localhost:5000/api/problems/${problemId}`)
       .then((res) => res.json())
-      .then((data) => setSelectedProblem(data))
+      .then((data) => {
+        setSelectedProblem(data);
+        if (data.starterCode) setCode(data.starterCode);
+      })
       .catch((err) => console.error(err));
   }, [problemId]);
 
-  // Timer
   useEffect(() => {
     const timer = setInterval(() => setTimeSpent((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
@@ -64,13 +69,13 @@ const ProblemSolve = () => {
       const response = await fetch("http://localhost:5000/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }), // send code state to backend
+        body: JSON.stringify({ code }),
       });
 
       const data = await response.json();
 
-      setOutput(data.output); // backend returns the execution result
-      setTestResults(data.testResults || []); // if backend sends test results
+      setOutput(data.output || "");
+      setTestResults(data.testResults || []);
     } catch (error) {
       setOutput("Error running code: " + error.message);
     }
@@ -126,9 +131,6 @@ const ProblemSolve = () => {
             >
               {selectedProblem.difficulty}
             </div>
-            <div className="text-sm text-gray-400">
-              {selectedProblem.points} points
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -170,18 +172,97 @@ const ProblemSolve = () => {
         </div>
       </div>
 
-      {/* Problem Description */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden">
-        <div className="md:w-1/2 bg-slate-800 p-4 rounded-lg overflow-auto">
-          <h2 className="text-lg font-semibold text-white mb-2">
-            Problem Description
-          </h2>
-          <p className="text-gray-300 whitespace-pre-wrap">
-            {selectedProblem.description}
-          </p>
+        {/* Left Panel: Problem Info */}
+        <div className="md:w-1/2 flex flex-col gap-4 overflow-auto">
+          {/* Description */}
+          <div className="bg-slate-800 p-4 rounded-lg">
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Description
+            </h2>
+            <p className="text-gray-300 whitespace-pre-wrap">
+              {selectedProblem.description}
+            </p>
+          </div>
+
+          {/* Tags */}
+          {selectedProblem.tags && selectedProblem.tags.length > 0 && (
+            <div className="bg-slate-800 p-4 rounded-lg">
+              <h2 className="text-lg font-semibold text-white mb-2">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {selectedProblem.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Constraints (Collapsible) */}
+          {selectedProblem.constraints &&
+            selectedProblem.constraints.length > 0 && (
+              <div className="bg-slate-800 p-4 rounded-lg">
+                <div
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => setShowConstraints((prev) => !prev)}
+                >
+                  <h2 className="text-lg font-semibold text-white mb-2">
+                    Constraints
+                  </h2>
+                  {showConstraints ? <ChevronUp /> : <ChevronDown />}
+                </div>
+                {showConstraints && (
+                  <ul className="list-disc list-inside text-gray-300">
+                    {selectedProblem.constraints.map((c, idx) => (
+                      <li key={idx}>{c}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+          {/* Examples (Collapsible) */}
+          {selectedProblem.examples && selectedProblem.examples.length > 0 && (
+            <div className="bg-slate-800 p-4 rounded-lg">
+              <div
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => setShowExamples((prev) => !prev)}
+              >
+                <h2 className="text-lg font-semibold text-white mb-2">
+                  Examples
+                </h2>
+                {showExamples ? <ChevronUp /> : <ChevronDown />}
+              </div>
+              {showExamples &&
+                selectedProblem.examples.map((ex, idx) => (
+                  <div key={idx} className="mb-4 bg-slate-700 p-3 rounded-lg">
+                    <p className="text-gray-400 whitespace-pre-wrap">
+                      <strong>Input:</strong>
+                      {"\n"}
+                      {ex.input}
+                    </p>
+                    <p className="text-gray-400 whitespace-pre-wrap">
+                      <strong>Output:</strong>
+                      {"\n"}
+                      {ex.output}
+                    </p>
+                    {ex.explanation && (
+                      <p className="text-gray-400 whitespace-pre-wrap">
+                        <strong>Explanation:</strong> {ex.explanation}
+                      </p>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
-        {/* Code Editor */}
+        {/* Right Panel: Code Editor */}
         <div className="md:w-1/2 flex flex-col">
           <MonacoEditor
             height="400px"
@@ -200,6 +281,16 @@ const ProblemSolve = () => {
           <div className="mt-2 bg-slate-900 p-4 rounded-lg text-gray-300 h-48 overflow-auto whitespace-pre-wrap">
             {output || "Your output will appear here..."}
           </div>
+
+          {/* Test Results */}
+          {testResults.length > 0 && (
+            <div className="mt-2 bg-slate-800 p-4 rounded-lg text-gray-300 h-32 overflow-auto whitespace-pre-wrap">
+              <h2 className="font-semibold text-white mb-2">Test Results</h2>
+              {testResults.map((tr, idx) => (
+                <p key={idx}>{tr}</p>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
