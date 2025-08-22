@@ -1,0 +1,1 @@
+[{"method":"GET","url":"http://localhost:3000/get","expected":"This is GET route"},{"method":"POST","url":"http://localhost:3000/post","body":{"data":"test123"},"expected":{"message":"Received POST","body":{"data":"test123"}}}]
