@@ -46,17 +46,19 @@ function waitForServer(url, retries = 20, delay = 500) {
 // Run test cases
 async function runTests() {
   try {
-    const firstUrl = testCases[0]?.url || "http://localhost:3000";
-    await waitForServer(firstUrl);
-
     const results = [];
+    const defaultUrl = "http://localhost:3000/";
+
+    await waitForServer(defaultUrl);
 
     for (let i = 0; i < testCases.length; i++) {
       const test = testCases[i];
+
       const options = {
-        url: test.url,
-        method: test.method,
-        json: test.body || undefined,
+        url: test.url || defaultUrl,
+        method: test.method || "GET",
+        body: test.body || undefined,
+        json: test.body ? true : undefined, // send JSON if body provided
         timeout: 5000,
       };
 
@@ -73,10 +75,19 @@ async function runTests() {
             return resolve();
           }
 
-          const passed =
-            typeof test.expected === "string"
-              ? body === test.expected
-              : JSON.stringify(body) === JSON.stringify(test.expected);
+          // Normalize response
+          let actual = body;
+          if (typeof body === "object") {
+            actual = JSON.stringify(body);
+          }
+
+          // Normalize expected
+          let expected = test.expected;
+          if (typeof expected === "object") {
+            expected = JSON.stringify(expected);
+          }
+
+          const passed = actual === expected;
 
           results.push({
             index: i + 1,
@@ -90,7 +101,9 @@ async function runTests() {
       });
     }
 
-    console.log(JSON.stringify(results));
+    console.log(JSON.stringify(results, null, 2));
+     child.kill();
+    process.exit(0);
   } catch (e) {
     console.error("Error running tests:", e.message);
   } finally {
