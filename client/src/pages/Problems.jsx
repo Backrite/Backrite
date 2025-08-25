@@ -33,7 +33,7 @@ const Problems = ({ problems }) => {
     }) || [];
 
   const handleSolveProblem = (problem) => {
-    navigate(`/solve/${problem._id}`);
+    navigate(`/solve/${problem.slug}`);
   };
 
   return (

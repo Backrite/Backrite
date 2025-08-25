@@ -28,7 +28,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -40,147 +40,76 @@ app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use(bodyParser.json());
-// import { spawn } from "child_process";
+import { spawn } from "child_process";
 
-// app.post("/api/run", async (req, res) => {
-//   try {
-//     const { code, tests } = req.body;
-//     if (!code || !tests) {
-//       return res.status(400).json({ error: "Code and tests are required" });
-//     }
-
-//     const runFolder = path.join(process.cwd(), `temp_${Date.now()}`);
-//     fs.mkdirSync(runFolder);
-
-//     fs.writeFileSync(path.join(runFolder, "solution.js"), code);
-//     fs.writeFileSync(path.join(runFolder, "tests.json"), JSON.stringify(tests));
-
-//     const runFolderDocker = runFolder.replace(/\\/g, "/");
-
-//     const child = spawn("docker", [
-//       "run",
-//       // "--rm",
-//       "-v",
-//       `${runFolderDocker}:/app`,
-//       "backrite-runner"
-//     ], { shell: true });
-//     console.log(child.stdout.data)
-//     let stdout = "";
-//     let stderr = "";
-
-//     child.stdout.on("data", (data) => {
-//   console.log("DOCKER STDOUT:", data.toString()); // ✅ debug log
-//   stdout += data.toString();
-// });
-
-//     child.stderr.on("data", (data) => {
-//       stderr += data.toString();
-//     });
-
-//     child.on("close", (code) => {
-//       if (code !== 0) {
-//         console.error("Docker failed:", stderr);
-//         return res.status(500).json({ error: "Execution failed", details: stderr });
-//       }
-
-//       try {
-//         const result = JSON.parse(stdout);
-//         return res.json({ results: result });
-//       } catch (e) {
-//         return res.status(500).json({ error: "Invalid container output", raw: stdout });
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error("Server error:", err);
-//     res.status(500).json({ error: "Server crashed", details: err.message });
-//   }
-// });
-
-
-
-import http from "http";
-app.use(express.json());
-
-// 🔹 helper for talking to Docker API
-function dockerRequest(method, urlPath, body = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      host: "localhost",
-      port: 2375, // Docker Remote API (make sure dockerd is running with -H tcp://0.0.0.0:2375)
-      path: urlPath,
-      method,
-      headers: { "Content-Type": "application/json" },
-    };
-
-    const req = http.request(options, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => resolve(data));
-    });
-
-    req.on("error", (err) => reject(err));
-
-    if (body) req.write(JSON.stringify(body));
-    req.end();
-  });
-}
-
-// ✅ Test basic version endpoint
-const options = {
-  host: "localhost",
-  port: 2375,
-  path: "/version",
-  method: "GET",
-};
-
-const testReq = http.request(options, (res) => {
-  let data = "";
-  res.on("data", (chunk) => (data += chunk));
-  res.on("end", () => console.log("Docker Version Response:", data));
-});
-testReq.on("error", (err) => console.error("Error:", err));
-testReq.end();
-
-// ✅ Run user code inside container
 app.post("/api/run", async (req, res) => {
   try {
     const { code, tests } = req.body;
-    const runFolder = path.join(process.cwd(), `temp_${Date.now()}`);
-    fs.mkdirSync(runFolder);
-    fs.writeFileSync(path.join(runFolder, "solution.js"), code);
-    fs.writeFileSync(path.join(runFolder, "tests.json"), JSON.stringify(tests));
+    if (!code || !tests) {
+      return res.status(400).json({ error: "Code and tests are required" });
+    }
 
-    // 1. Create container
-    const createRes = await dockerRequest("POST", "/containers/create", {
-      Image: "backrite-runner",
-      Cmd: ["node", "index.js"],
-      HostConfig: {
-        Binds: [`${runFolder}:/app`],
-      },
-    });
-    const containerId = JSON.parse(createRes).Id;
+    // console.log(code);
+    // console.log(tests);
 
-    // 2. Start container
-    await dockerRequest("POST", `/containers/${containerId}/start`);
+    // Base64 encode user code + tests
+    const codeB64 = Buffer.from(code).toString("base64");
+    const testsB64 = Buffer.from(JSON.stringify(tests)).toString("base64");
 
-    // 3. Get logs
-    const logs = await dockerRequest(
-      "GET",
-      `/containers/${containerId}/logs?stdout=true&stderr=true`
+    // console.log("Encoded CODE:", codeB64.slice(0, 50) + "...");
+
+    const child = spawn(
+      "docker",
+      [
+        "run",
+        "--rm",
+        "-e",
+        `CODE=${codeB64}`,
+        "-e",
+        `TESTS=${testsB64}`,
+        "backrite-runner",
+      ],
+      { shell: true }
     );
 
-    // 4. Remove container
-    await dockerRequest("DELETE", `/containers/${containerId}?force=true`);
+    let stdout = "";
+    let stderr = "";
 
-    res.json({ results: logs });
+    child.stdout.on("data", (data) => {
+      console.log("DOCKER STDOUT:", data.toString()); // ✅ debug log
+      stdout += data.toString();
+    });
+
+    child.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        console.error("Docker failed:", stderr);
+        return res
+          .status(500)
+          .json({ error: "Execution failed", details: stderr });
+      }
+
+      try {
+        const jsonStartIndex = stdout.indexOf("[");
+        const jsonPart = stdout.slice(jsonStartIndex);
+
+        const parsedResults = JSON.parse(jsonPart);
+
+        return res.json({ results: parsedResults });
+      } catch (e) {
+        return res
+          .status(500)
+          .json({ error: "Invalid container output", raw: stdout });
+      }
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Server crashed", details: err.message });
   }
 });
-
-
 
 app.use(errorHandler);
 

@@ -1,7 +1,7 @@
 import express from "express";
 import {
   getAllProblems,
-  getProblemById,
+  getProblemBySlug,
 } from "../controllers/problemController.js";
 
 const router = express.Router();
@@ -9,7 +9,6 @@ const router = express.Router();
 // GET /problems - fetch all problems
 router.get("/", getAllProblems);
 
-// GET /problems/:slug - fetch a single problem
-router.get("/:id", getProblemById);
+router.get("/:slug", getProblemBySlug);
 
 export default router;

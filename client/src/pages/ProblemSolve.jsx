@@ -21,21 +21,20 @@ const ProblemSolve = () => {
   const [timeSpent, setTimeSpent] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
-
   const [showConstraints, setShowConstraints] = useState(true);
   const [showExamples, setShowExamples] = useState(true);
 
-  const { problemId } = useParams();
+  const { slug } = useParams();
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/problems/${problemId}`)
+    fetch(`http://localhost:5000/api/problems/${slug}`)
       .then((res) => res.json())
       .then((data) => {
         setSelectedProblem(data);
         if (data.starterCode) setCode(data.starterCode);
       })
       .catch((err) => console.error(err));
-  }, [problemId]);
+  }, [slug]);
 
   useEffect(() => {
     const timer = setInterval(() => setTimeSpent((prev) => prev + 1), 1000);
@@ -61,7 +60,55 @@ const ProblemSolve = () => {
     }
   };
 
+  // const runCode = async () => {
+  //   if (!selectedProblem || !selectedProblem.examples) {
+  //     setOutput("No testcases available to run.");
+  //     return;
+  //   }
+
+  //   setIsRunning(true);
+  //   setOutput("Running your code...\n");
+
+  //   try {
+  //     const response = await fetch("http://localhost:5000/api/run", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         code,
+  //         testcases: selectedProblem.examples.map((ex, idx) => ({
+  //           index: idx + 1,
+  //           input: ex.input,
+  //           expected: ex.output,
+  //         })),
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (data.results) {
+  //       setTestResults(data.results);
+  //       setOutput("Code executed successfully.");
+  //     } else {
+  //       setOutput(data.output || "");
+  //       setTestResults([]);
+  //     }
+  //   } catch (error) {
+  //     setOutput("Error running code: " + error.message);
+  //   }
+
+  //   setIsRunning(false);
+  // };
+
   const runCode = async () => {
+    if (
+      !selectedProblem ||
+      !selectedProblem.examples ||
+      selectedProblem.examples.length === 0
+    ) {
+      setOutput("No examples/testcases available to run.");
+      return;
+    }
+
     setIsRunning(true);
     setOutput("Running your code...\n");
 
@@ -69,13 +116,21 @@ const ProblemSolve = () => {
       const response = await fetch("http://localhost:5000/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({
+          code,
+          tests: selectedProblem.testCases,
+        }),
       });
 
       const data = await response.json();
 
-      setOutput(data.output || "");
-      setTestResults(data.testResults || []);
+      if (data.results) {
+        setTestResults(data.results);
+        setOutput("Code executed successfully.");
+      } else {
+        setOutput(data.output || "No output returned from backend.");
+        setTestResults([]);
+      }
     } catch (error) {
       setOutput("Error running code: " + error.message);
     }
@@ -174,9 +229,8 @@ const ProblemSolve = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden">
-        {/* Left Panel: Problem Info */}
+        {/* Left Panel */}
         <div className="md:w-1/2 flex flex-col gap-4 overflow-auto">
-          {/* Description */}
           <div className="bg-slate-800 p-4 rounded-lg">
             <h2 className="text-lg font-semibold text-white mb-2">
               Description
@@ -186,7 +240,6 @@ const ProblemSolve = () => {
             </p>
           </div>
 
-          {/* Tags */}
           {selectedProblem.tags && selectedProblem.tags.length > 0 && (
             <div className="bg-slate-800 p-4 rounded-lg">
               <h2 className="text-lg font-semibold text-white mb-2">Tags</h2>
@@ -203,31 +256,28 @@ const ProblemSolve = () => {
             </div>
           )}
 
-          {/* Constraints (Collapsible) */}
-          {selectedProblem.constraints &&
-            selectedProblem.constraints.length > 0 && (
-              <div className="bg-slate-800 p-4 rounded-lg">
-                <div
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => setShowConstraints((prev) => !prev)}
-                >
-                  <h2 className="text-lg font-semibold text-white mb-2">
-                    Constraints
-                  </h2>
-                  {showConstraints ? <ChevronUp /> : <ChevronDown />}
-                </div>
-                {showConstraints && (
-                  <ul className="list-disc list-inside text-gray-300">
-                    {selectedProblem.constraints.map((c, idx) => (
-                      <li key={idx}>{c}</li>
-                    ))}
-                  </ul>
-                )}
+          {selectedProblem.constraints?.length > 0 && (
+            <div className="bg-slate-800 p-4 rounded-lg">
+              <div
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => setShowConstraints((prev) => !prev)}
+              >
+                <h2 className="text-lg font-semibold text-white mb-2">
+                  Constraints
+                </h2>
+                {showConstraints ? <ChevronUp /> : <ChevronDown />}
               </div>
-            )}
+              {showConstraints && (
+                <ul className="list-disc list-inside text-gray-300">
+                  {selectedProblem.constraints.map((c, idx) => (
+                    <li key={idx}>{c}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
-          {/* Examples (Collapsible) */}
-          {selectedProblem.examples && selectedProblem.examples.length > 0 && (
+          {selectedProblem.examples?.length > 0 && (
             <div className="bg-slate-800 p-4 rounded-lg">
               <div
                 className="flex justify-between items-center cursor-pointer"
@@ -262,7 +312,7 @@ const ProblemSolve = () => {
           )}
         </div>
 
-        {/* Right Panel: Code Editor */}
+        {/* Right Panel */}
         <div className="md:w-1/2 flex flex-col">
           <MonacoEditor
             height="400px"
@@ -277,17 +327,60 @@ const ProblemSolve = () => {
               scrollBeyondLastLine: false,
             }}
           />
-          {/* Output */}
-          <div className="mt-2 bg-slate-900 p-4 rounded-lg text-gray-300 h-48 overflow-auto whitespace-pre-wrap">
+
+          <div className="mt-2 bg-slate-900 p-4 rounded-lg text-gray-300 min-h-16 max-h-48 overflow-auto whitespace-pre-wrap">
             {output || "Your output will appear here..."}
           </div>
 
           {/* Test Results */}
           {testResults.length > 0 && (
-            <div className="mt-2 bg-slate-800 p-4 rounded-lg text-gray-300 h-32 overflow-auto whitespace-pre-wrap">
-              <h2 className="font-semibold text-white mb-2">Test Results</h2>
-              {testResults.map((tr, idx) => (
-                <p key={idx}>{tr}</p>
+            <div className="mt-2 bg-slate-800 p-4 rounded-lg text-gray-300 max-h-64 overflow-auto">
+              <h2 className="font-semibold text-white mb-3">Test Results</h2>
+              <p className="mb-3 text-sm text-gray-400">
+                {testResults.filter((t) => t.passed).length} /{" "}
+                {testResults.length} Testcases Passed
+              </p>
+              {testResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  className={`border-l-4 pl-3 mb-3 ${
+                    result.passed ? "border-green-500" : "border-red-500"
+                  }`}
+                >
+                  <p className="mb-1">
+                    {result.passed ? "✅" : "❌"}{" "}
+                    <span className="font-semibold text-white">
+                      Test Case {result.index}{" "}
+                      {result.passed ? "Passed" : "Failed"}
+                    </span>
+                  </p>
+                  {result.input && (
+                    <p>
+                      <span className="text-white font-medium">Input:</span>{" "}
+                      <code className="text-blue-300">
+                        {JSON.stringify(result.input)}
+                      </code>
+                    </p>
+                  )}
+                  <p>
+                    <span className="text-white font-medium">Expected:</span>{" "}
+                    <code className="text-yellow-300">
+                      {JSON.stringify(result.expected)}
+                    </code>
+                  </p>
+                  <p>
+                    <span className="text-white font-medium">Actual:</span>{" "}
+                    <code className="text-purple-300">
+                      {JSON.stringify(result.actual)}
+                    </code>
+                  </p>
+                  {result.error && (
+                    <p className="text-red-400">
+                      <span className="text-white font-medium">Error:</span>{" "}
+                      {result.error}
+                    </p>
+                  )}
+                </div>
               ))}
             </div>
           )}
