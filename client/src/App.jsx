@@ -43,7 +43,7 @@ function App() {
           <Route path="signup" element={<SignUp setUser={setUser} />} />
           <Route path="dashboard" element={<Dashboard user={user} />} />
           <Route path="problems" element={<Problems problems={problems} />} />
-          <Route path="solve/:problemId" element={<ProblemSolve />} />
+          <Route path="solve/:slug" element={<ProblemSolve />} />
         </Route>
       </Routes>
     </BrowserRouter>

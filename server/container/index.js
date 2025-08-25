@@ -3,14 +3,29 @@ const { spawn } = require("child_process");
 const request = require("postman-request");
 const http = require("http");
 
-// Read user code and tests from mounted folder
-const code = fs.readFileSync("/app/solution.js", "utf-8");
-const testsRaw = fs.readFileSync("/app/tests.json", "utf-8");
+// Read user code and tests
+// Handle both raw and Base64 env vars
+let code = process.env.CODE;
+let testsRaw = process.env.TESTS;
 
-// Write code to temporary solution.js inside container
-fs.writeFileSync("solution.js", code);
+if (process.env.CODE) {
+  try {
+    code = Buffer.from(process.env.CODE, "base64").toString("utf8");
+  } catch (e) {
+    console.error("Failed to decode CODE:", e.message);
+    process.exit(1);
+  }
+}
 
-// Parse test cases
+if (process.env.TESTS) {
+  try {
+    testsRaw = Buffer.from(process.env.TESTS, "base64").toString("utf8");
+  } catch (e) {
+    console.error("Failed to decode TESTS:", e.message);
+    process.exit(1);
+  }
+}
+
 let testCases;
 try {
   testCases = JSON.parse(testsRaw);
@@ -19,6 +34,9 @@ try {
   process.exit(1);
 }
 
+// ✅ Write the solution file for execution
+fs.writeFileSync("solution.js", code);
+
 // Spawn user code server
 const child = spawn("node", ["solution.js"], {
   stdio: ["ignore", "pipe", "pipe"],
@@ -26,6 +44,12 @@ const child = spawn("node", ["solution.js"], {
 
 child.stdout.on("data", (data) => process.stdout.write(data));
 child.stderr.on("data", (data) => process.stderr.write(data));
+
+child.on("exit", (code) => {
+  if (code !== 0) {
+    console.error(`Child process exited with code ${code}`);
+  }
+});
 
 // Wait until server is ready
 function waitForServer(url, retries = 20, delay = 500) {
@@ -43,6 +67,12 @@ function waitForServer(url, retries = 20, delay = 500) {
   });
 }
 
+function normalize(value) {
+  return typeof value === "object"
+    ? JSON.stringify(value, Object.keys(value).sort())
+    : String(value);
+}
+
 // Run test cases
 async function runTests() {
   try {
@@ -58,7 +88,7 @@ async function runTests() {
         url: test.url || defaultUrl,
         method: test.method || "GET",
         body: test.body || undefined,
-        json: test.body ? true : undefined, // send JSON if body provided
+        json: test.body ? true : undefined,
         timeout: 5000,
       };
 
@@ -75,18 +105,8 @@ async function runTests() {
             return resolve();
           }
 
-          // Normalize response
-          let actual = body;
-          if (typeof body === "object") {
-            actual = JSON.stringify(body);
-          }
-
-          // Normalize expected
-          let expected = test.expected;
-          if (typeof expected === "object") {
-            expected = JSON.stringify(expected);
-          }
-
+          const actual = normalize(body);
+          const expected = normalize(test.expected);
           const passed = actual === expected;
 
           results.push({
@@ -102,8 +122,6 @@ async function runTests() {
     }
 
     console.log(JSON.stringify(results, null, 2));
-     child.kill();
-    process.exit(0);
   } catch (e) {
     console.error("Error running tests:", e.message);
   } finally {
