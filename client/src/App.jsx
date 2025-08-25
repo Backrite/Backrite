@@ -7,6 +7,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Problems from "./pages/Problems";
 import ProblemSolve from "./pages/ProblemSolve";
+import Feedback from "./pages/Feedback";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -44,6 +45,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard user={user} />} />
           <Route path="problems" element={<Problems problems={problems} />} />
           <Route path="solve/:slug" element={<ProblemSolve />} />
+          <Route path="feedback" element={<Feedback />} />
         </Route>
       </Routes>
     </BrowserRouter>

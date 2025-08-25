@@ -38,12 +38,12 @@ function Header({ user, setUser }) {
   const navLinks = user
     ? [
         { name: "Problems", to: "/problems" },
-        { name: "Docs", to: "/docs" },
+        { name: "Feedback", to: "/feedback" },
       ]
     : [
         { name: "Home", to: "/" },
         { name: "Problems", to: "/problems" },
-        { name: "Docs", to: "/docs" },
+        { name: "Feedback", to: "/feedback" },
       ];
 
   return (
