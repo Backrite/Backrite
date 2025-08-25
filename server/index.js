@@ -6,6 +6,8 @@ import connectDb from "./config/dbConnection.js";
 import authRoutes from "./routes/authroutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import feedbackRoute from "./routes/feedback.js";
+import submitRoutes from "./routes/submitRoutes.js";
 import cors from "cors";
 import errorHandler from "./middleware/errorHandler.js";
 import path from "path";
@@ -25,6 +27,7 @@ const __dirname = path.dirname(__filename);
 
 // Middleware to parse JSON
 app.use(express.json());
+app.use(express.static("public"));
 
 app.use(
   cors({
@@ -39,6 +42,8 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/submit", submitRoutes);
+app.use("/api/send-feedback", feedbackRoute);
 app.use(bodyParser.json());
 import { spawn } from "child_process";
 

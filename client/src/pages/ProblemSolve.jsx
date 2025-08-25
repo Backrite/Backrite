@@ -60,45 +60,6 @@ const ProblemSolve = () => {
     }
   };
 
-  // const runCode = async () => {
-  //   if (!selectedProblem || !selectedProblem.examples) {
-  //     setOutput("No testcases available to run.");
-  //     return;
-  //   }
-
-  //   setIsRunning(true);
-  //   setOutput("Running your code...\n");
-
-  //   try {
-  //     const response = await fetch("http://localhost:5000/api/run", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         code,
-  //         testcases: selectedProblem.examples.map((ex, idx) => ({
-  //           index: idx + 1,
-  //           input: ex.input,
-  //           expected: ex.output,
-  //         })),
-  //       }),
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (data.results) {
-  //       setTestResults(data.results);
-  //       setOutput("Code executed successfully.");
-  //     } else {
-  //       setOutput(data.output || "");
-  //       setTestResults([]);
-  //     }
-  //   } catch (error) {
-  //     setOutput("Error running code: " + error.message);
-  //   }
-
-  //   setIsRunning(false);
-  // };
-
   const runCode = async () => {
     if (
       !selectedProblem ||
@@ -137,13 +98,95 @@ const ProblemSolve = () => {
 
     setIsRunning(false);
   };
+  // const submitSolution = async () => {
+  //   if (testResults.length === 0) {
+  //     alert("⚠️ Please run your code on test cases before submitting!");
+  //     return;
+  //   }
 
-  const submitSolution = () => {
-    setIsSubmitted(true);
-    setTimeout(() => {
-      alert("Solution submitted successfully!");
-      navigate("/dashboard");
-    }, 500);
+  //   try {
+  //     setIsSubmitted(true);
+
+  //     const response = await fetch("http://localhost:5000/api/submit", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //       },
+  //       body: JSON.stringify({
+  //         problemId: selectedProblem._id,
+  //         code,
+  //         testResults,
+  //         timeSpent,
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       if (data.submission.status === "failed") {
+  //         alert(
+  //           `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
+  //         );
+  //       } else {
+  //         alert(
+  //           `✅ Solution submitted successfully! All test cases passed, problem marked as solved.`
+  //         );
+  //       }
+  //       navigate("/dashboard");
+  //     } else {
+  //       alert(`❌ Submission failed: ${data.message || "Unknown error"}`);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert(`❌ Error submitting solution: ${error.message}`);
+  //   }
+  // };
+
+  const submitSolution = async () => {
+    if (testResults.length === 0) {
+      alert("⚠️ Please run your code on test cases before submitting!");
+      return;
+    }
+
+    try {
+      // Do NOT set isSubmitted here yet
+
+      const response = await fetch("http://localhost:5000/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          problemId: selectedProblem._id,
+          code,
+          testResults,
+          timeSpent,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsSubmitted(true); // Only set submitted after success
+        if (data.submission.status === "failed") {
+          alert(
+            `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
+          );
+        } else {
+          alert(
+            `✅ Solution submitted successfully! All test cases passed, problem marked as solved.`
+          );
+        }
+        navigate("/dashboard");
+      } else {
+        alert(`❌ Submission failed: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert(`❌ Error submitting solution: ${error.message}`);
+    }
   };
 
   if (!selectedProblem) {
