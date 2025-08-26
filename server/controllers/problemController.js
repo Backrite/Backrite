@@ -5,14 +5,16 @@ import Problem from "../models/Problem.js";
 // @route   GET /problems
 export const getAllProblems = async (req, res) => {
   try {
-    const problems = await Problem.find({}).sort({ createdAt: -1 });
+    // sort by createdAt ascending (oldest first → insertion order)
+    const problems = await Problem.find({}).sort({  _id: 1 });
     res.json(problems);
   } catch (err) {
     res.status(500).json({ error: "Server error while fetching problems" });
   }
 };
 
-// GET /problems/:slug
+// @desc    Get single problem by slug
+// @route   GET /problems/:slug
 export const getProblemBySlug = async (req, res) => {
   try {
     const problem = await Problem.findOne({ slug: req.params.slug });

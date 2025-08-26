@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, Play, Filter } from "lucide-react";
 
@@ -6,6 +6,14 @@ const Problems = ({ problems }) => {
   const navigate = useNavigate();
   const [filterDifficulty, setFilterDifficulty] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
+
+    // ✅ Protect the page
+   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/signup"); // redirect if not logged in
+    }
+  }, [navigate]);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {

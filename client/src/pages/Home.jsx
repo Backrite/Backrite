@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Code,
   Users,
@@ -33,6 +35,22 @@ function Home() {
     document.querySelectorAll("[id]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
+
+  const HeroSection = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+      <button
+        onClick={() => navigate("/signup")}
+        className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 flex items-center gap-2"
+      >
+        Start coding for free
+        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+      </button>
+    </div>
+  );
+};
 
   return (
     <main className="min-h-screen bg-gray-950">
@@ -80,15 +98,7 @@ function Home() {
 
             {/* Premium CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <button className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 flex items-center gap-2">
-                Start coding for free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-              </button>
-
-              <button className="group border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 hover:bg-gray-800/50 flex items-center gap-2">
-                <Play className="w-5 h-5" />
-                Watch demo
-              </button>
+              <HeroSection />
             </div>
 
             {/* Premium Stats */}
@@ -96,20 +106,20 @@ function Home() {
               {[
                 {
                   icon: Users,
-                  number: "50,000+",
+                  number: "50+",
                   label: "Active developers",
                   color: "text-blue-400",
                 },
                 {
                   icon: Code,
-                  number: "1,000+",
+                  number: "20+",
                   label: "Coding challenges",
                   color: "text-purple-400",
                 },
                 {
                   icon: Award,
                   number: "98%",
-                  label: "Success rate",
+                  label: "Execution rate",
                   color: "text-green-400",
                 },
               ].map((stat, index) => (
@@ -233,29 +243,6 @@ function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Premium CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent_70%)]"></div>
-
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to level up your{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              backend skills
-            </span>
-            ?
-          </h2>
-          <p className="text-xl text-gray-400 mb-10 leading-relaxed">
-            Join thousands of developers who are already advancing their careers
-            with BackRite.
-          </p>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-blue-500/25">
-            Start your free trial
-          </button>
         </div>
       </section>
     </main>
