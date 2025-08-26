@@ -8,96 +8,99 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-// Fetch dashboard data from your backend
-const fetchDashboardData = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  // Fetch dashboard data from your backend
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const token = localStorage.getItem('token');
-    console.log('Token found:', !!token); // Debug: Check if token exists
+      const token = localStorage.getItem("token");
+      console.log("Token found:", !!token); // Debug: Check if token exists
 
-    // Call your existing dashboard endpoint
-    const response = await fetch('/api/dashboard', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+      // Call your existing dashboard endpoint
+      const response = await fetch("/api/dashboard", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    console.log('📡 API Response status:', response.status); // Debug: Check response status
+      console.log("📡 API Response status:", response.status); // Debug: Check response status
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        // Redirect user to signup if not logged in
-        window.location.href = '/signup';
-        return; // stop further execution
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Redirect user to signup if not logged in
+          window.location.href = "/signup";
+          return; // stop further execution
+        }
+        throw new Error(`Failed to fetch dashboard data: ${response.status}`);
       }
-      throw new Error(`Failed to fetch dashboard data: ${response.status}`);
+
+      const data = await response.json();
+      console.log("📊 Dashboard data received:", data); // Debug: Check received data
+
+      // Set user data from the response
+      setUser({
+        username: data.username,
+        totalSolved: data.totalSolved,
+        totalAttempted: data.totalAttempted,
+        difficultyStats: data.difficultyStats,
+        streak: data.streak || 0, // use backend streak if available
+      });
+
+      console.log("✅ User state updated"); // Debug: Confirm state update
+
+      // Create mock problems array based on your backend data
+      // You can replace this with actual problems data if you have a separate endpoint
+      setProblems(generateMockProblems(data));
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    const data = await response.json();
-    console.log('📊 Dashboard data received:', data); // Debug: Check received data
-
-    // Set user data from the response
-    setUser({
-      username: data.username,
-      totalSolved: data.totalSolved,
-      totalAttempted: data.totalAttempted,
-      difficultyStats: data.difficultyStats,
-      streak: data.streak || 0, // use backend streak if available
-    });
-
-    console.log('✅ User state updated'); // Debug: Confirm state update
-
-    // Create mock problems array based on your backend data
-    // You can replace this with actual problems data if you have a separate endpoint
-    setProblems(generateMockProblems(data));
-
-  } catch (err) {
-    console.error('Error fetching dashboard data:', err);
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Helper function to generate mock problems based on your backend data
   // Replace this with actual problems fetching if you have the data
   const generateMockProblems = (dashboardData) => {
     const mockProblems = [];
     let problemId = 1;
-    
+
     // Generate problems based on difficulty stats
-    Object.entries(dashboardData.difficultyStats).forEach(([difficulty, solvedCount]) => {
-      // Add solved problems
-      for (let i = 0; i < solvedCount; i++) {
-        mockProblems.push({
-          id: problemId++,
-          title: `${difficulty} Problem ${i + 1}`,
-          description: `A ${difficulty.toLowerCase()} coding challenge`,
-          difficulty,
-          completed: true,
-          points: difficulty === 'Easy' ? 50 : difficulty === 'Medium' ? 100 : 200,
-        });
+    Object.entries(dashboardData.difficultyStats).forEach(
+      ([difficulty, solvedCount]) => {
+        // Add solved problems
+        for (let i = 0; i < solvedCount; i++) {
+          mockProblems.push({
+            id: problemId++,
+            title: `${difficulty} Problem ${i + 1}`,
+            description: `A ${difficulty.toLowerCase()} coding challenge`,
+            difficulty,
+            completed: true,
+            points:
+              difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
+          });
+        }
+
+        // Add a few unsolved problems for each difficulty
+        const unsolvedCount =
+          difficulty === "Easy" ? 3 : difficulty === "Medium" ? 2 : 1;
+        for (let i = 0; i < unsolvedCount; i++) {
+          mockProblems.push({
+            id: problemId++,
+            title: `${difficulty} Problem ${solvedCount + i + 1}`,
+            description: `A ${difficulty.toLowerCase()} coding challenge`,
+            difficulty,
+            completed: false,
+            points:
+              difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
+          });
+        }
       }
-      
-      // Add a few unsolved problems for each difficulty
-      const unsolvedCount = difficulty === 'Easy' ? 3 : difficulty === 'Medium' ? 2 : 1;
-      for (let i = 0; i < unsolvedCount; i++) {
-        mockProblems.push({
-          id: problemId++,
-          title: `${difficulty} Problem ${solvedCount + i + 1}`,
-          description: `A ${difficulty.toLowerCase()} coding challenge`,
-          difficulty,
-          completed: false,
-          points: difficulty === 'Easy' ? 50 : difficulty === 'Medium' ? 100 : 200,
-        });
-      }
-    });
-    
+    );
+
     return mockProblems;
   };
 
@@ -140,7 +143,9 @@ const fetchDashboardData = async () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Error Loading Dashboard</h2>
+          <h2 className="text-xl font-bold text-white mb-2">
+            Error Loading Dashboard
+          </h2>
           <p className="text-gray-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -158,7 +163,7 @@ const fetchDashboardData = async () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back, {user?.username || user?.name || 'User'}!
+            Welcome back, {user?.username || user?.name || "User"}!
           </h1>
           <p className="text-gray-400">
             Ready to tackle some backend challenges?
@@ -203,8 +208,7 @@ const fetchDashboardData = async () => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
-                  0
-                  {/* {user?.streak || 0} */}
+                  0{/* {user?.streak || 0} */}
                 </div>
                 <div className="text-gray-400">Day Streak</div>
               </div>
@@ -254,7 +258,7 @@ const fetchDashboardData = async () => {
               </div>
             ))}
           </div>
-          
+
           {problems.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-400">No problems available yet.</p>
