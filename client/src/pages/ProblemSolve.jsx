@@ -26,27 +26,55 @@ const ProblemSolve = () => {
 
   const { slug } = useParams();
 
+  u
+  // ✅ Protect the page: redirect if not logged in
   useEffect(() => {
-    fetch(`http://localhost:5000/api/problems/${slug}`)
-      .then((res) => res.json())
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/signup");
+    }
+  }, [navigate]);
+
+  // Fetch problem data
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`http://localhost:5000/api/problems/${slug}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          navigate("/signup"); // redirect if token invalid
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        setSelectedProblem(data);
-        if (data.starterCode) setCode(data.starterCode);
+        if (data) {
+          setSelectedProblem(data);
+          if (data.starterCode) setCode(data.starterCode);
+        }
       })
       .catch((err) => console.error(err));
-  }, [slug]);
+  }, [slug, navigate]);
 
+  // Timer for time spent
   useEffect(() => {
     const timer = setInterval(() => setTimeSpent((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Format time helper
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Difficulty color helper
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case "Easy":
@@ -60,12 +88,9 @@ const ProblemSolve = () => {
     }
   };
 
+  // Run code function
   const runCode = async () => {
-    if (
-      !selectedProblem ||
-      !selectedProblem.examples ||
-      selectedProblem.examples.length === 0
-    ) {
+    if (!selectedProblem?.examples?.length) {
       setOutput("No examples/testcases available to run.");
       return;
     }
@@ -98,51 +123,8 @@ const ProblemSolve = () => {
 
     setIsRunning(false);
   };
-  // const submitSolution = async () => {
-  //   if (testResults.length === 0) {
-  //     alert("⚠️ Please run your code on test cases before submitting!");
-  //     return;
-  //   }
 
-  //   try {
-  //     setIsSubmitted(true);
-
-  //     const response = await fetch("http://localhost:5000/api/submit", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //       },
-  //       body: JSON.stringify({
-  //         problemId: selectedProblem._id,
-  //         code,
-  //         testResults,
-  //         timeSpent,
-  //       }),
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (response.ok) {
-  //       if (data.submission.status === "failed") {
-  //         alert(
-  //           `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
-  //         );
-  //       } else {
-  //         alert(
-  //           `✅ Solution submitted successfully! All test cases passed, problem marked as solved.`
-  //         );
-  //       }
-  //       navigate("/dashboard");
-  //     } else {
-  //       alert(`❌ Submission failed: ${data.message || "Unknown error"}`);
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     alert(`❌ Error submitting solution: ${error.message}`);
-  //   }
-  // };
-
+  // Submit solution function
   const submitSolution = async () => {
     if (testResults.length === 0) {
       alert("⚠️ Please run your code on test cases before submitting!");
@@ -150,13 +132,17 @@ const ProblemSolve = () => {
     }
 
     try {
-      // Do NOT set isSubmitted here yet
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/signup");
+        return;
+      }
 
       const response = await fetch("http://localhost:5000/api/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           problemId: selectedProblem._id,
@@ -169,7 +155,7 @@ const ProblemSolve = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setIsSubmitted(true); // Only set submitted after success
+        setIsSubmitted(true);
         if (data.submission.status === "failed") {
           alert(
             `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
