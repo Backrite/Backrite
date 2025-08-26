@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ProblemSolve = () => {
   const navigate = useNavigate();
@@ -26,7 +27,6 @@ const ProblemSolve = () => {
 
   const { slug } = useParams();
 
-  u
   // ✅ Protect the page: redirect if not logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -127,7 +127,8 @@ const ProblemSolve = () => {
   // Submit solution function
   const submitSolution = async () => {
     if (testResults.length === 0) {
-      alert("⚠️ Please run your code on test cases before submitting!");
+      // alert("⚠️ Please run your code on test cases before submitting!");
+      toast.error("⚠️ Please run your code on test cases before submitting!");
       return;
     }
 
@@ -157,21 +158,25 @@ const ProblemSolve = () => {
       if (response.ok) {
         setIsSubmitted(true);
         if (data.submission.status === "failed") {
-          alert(
-            `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
-          );
+          // alert(
+          //   `⚠️ Submission recorded as a failed attempt. None of the test cases passed.`
+          // );
+          toast.error("⚠️ Submission failed: No test cases passed.");
         } else {
-          alert(
-            `✅ Solution submitted successfully! All test cases passed, problem marked as solved.`
-          );
+          // alert(
+          //   `✅ Solution submitted successfully! All test cases passed, problem marked as solved.`
+          // );
+          toast.success("✅ Solution submitted successfully! 🎉");
         }
         navigate("/dashboard");
       } else {
-        alert(`❌ Submission failed: ${data.message || "Unknown error"}`);
+        // alert(`❌ Submission failed: ${data.message || "Unknown error"}`);
+        toast.error(`❌ Submission failed: ${data.message || "Unknown error"}`);
       }
     } catch (error) {
       console.error(error);
-      alert(`❌ Error submitting solution: ${error.message}`);
+      // alert(`❌ Error submitting solution: ${error.message}`);
+      toast.error(`❌ Error: ${error.message}`);
     }
   };
 

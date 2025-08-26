@@ -99,6 +99,7 @@ const SignUp = ({ setUser }) => {
       };
 
       localStorage.setItem("token", data.token); // Store JWT
+      localStorage.setItem("user", JSON.stringify(newUser));
       setUser(newUser);
       navigate("/problems");
     } catch (error) {

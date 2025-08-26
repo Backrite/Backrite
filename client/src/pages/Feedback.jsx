@@ -57,7 +57,10 @@ function FeedbackPage() {
     },
   ];
 
+  // IntersectionObserver effect, re-run when form reappears
   useEffect(() => {
+    if (isSubmitted) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -72,7 +75,7 @@ function FeedbackPage() {
 
     document.querySelectorAll("[id]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [isSubmitted]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -96,29 +99,21 @@ function FeedbackPage() {
     setIsSubmitting(true);
 
     try {
-      // Prepare feedback data for backend
       const feedbackData = {
         type: selectedType,
-        rating: rating,
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
+        rating,
+        ...formData,
         timestamp: new Date().toISOString(),
       };
 
-      // Send to your backend API
       const response = await fetch("http://localhost:5000/api/send-feedback", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(feedbackData),
       });
 
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
       const result = await response.json();
       console.log("Feedback sent successfully:", result);
@@ -126,13 +121,26 @@ function FeedbackPage() {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error sending feedback:", error);
-      // You might want to add error state management here
       alert(
         "Sorry, there was an error sending your feedback. Please try again later."
       );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setSelectedType("");
+    setRating(0);
+    setHoveredRating(0);
+    setFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    });
+    setIsVisible({});
+    setIsSubmitted(false);
   };
 
   if (isSubmitted) {
@@ -154,7 +162,7 @@ function FeedbackPage() {
             input is invaluable to making our platform better for everyone.
           </p>
           <button
-            onClick={() => setIsSubmitted(false)}
+            onClick={resetForm}
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-blue-500/25"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -169,7 +177,6 @@ function FeedbackPage() {
     <main className="min-h-screen bg-gray-950">
       {/* Header Section */}
       <section className="relative pt-24 pb-12 overflow-hidden">
-        {/* Premium Background */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950"></div>
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
@@ -186,7 +193,6 @@ function FeedbackPage() {
             }`}
             id="header"
           >
-            {/* Premium Badge */}
             <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-2 mb-8 backdrop-blur-sm">
               <Sparkles className="w-4 h-4 text-blue-400" />
               <span className="text-blue-400 font-medium text-sm">
@@ -235,10 +241,6 @@ function FeedbackPage() {
                       selectedType === type.id
                         ? "border-blue-500/50 bg-blue-500/5"
                         : "border-gray-800/50 hover:border-gray-700/50"
-                    } ${
-                      isVisible.types
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-8 opacity-0"
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
                     onClick={() => setSelectedType(type.id)}
@@ -451,35 +453,6 @@ function FeedbackPage() {
                 with third parties.
               </p>
             </div>
-
-            {/* Developer Note
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-green-400 font-semibold">
-                  Backend API Ready
-                </span>
-              </div>
-              <div className="text-gray-300 text-sm space-y-2">
-                <p>
-                  <strong>Frontend configured for backend API!</strong>
-                </p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>
-                    Sends POST request to{" "}
-                    <code className="bg-gray-800 px-2 py-1 rounded">
-                      /api/send-feedback
-                    </code>
-                  </li>
-                  <li>Includes all form data and metadata</li>
-                  <li>Handles success/error responses</li>
-                </ul>
-                <p className="mt-3">
-                  <strong>Next:</strong> Set up the backend API endpoint using
-                  Node.js + Express + Nodemailer
-                </p>
-              </div>
-            </div> */}
           </div>
         </div>
       </section>

@@ -35,9 +35,20 @@ const registerAccount = asyncHandler(async (req, res) => {
     password: hashedPassword,
   });
   if (user) {
-    let token = jwt.sign(
-      { email, id: user._id },
-      process.env.ACCESS_TOKEN_SECRET
+    // let token = jwt.sign(
+    //   { email, id: user._id },
+    //   process.env.ACCESS_TOKEN_SECRET
+    // );
+    const token = jwt.sign(
+      {
+        user: {
+          name: user.username,
+          email: user.email,
+          id: user._id,
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "2d" }
     );
     return res.status(200).json({ token, user });
   } else {
