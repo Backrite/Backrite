@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from "lucide-react";
-
+const URL = import.meta.env.VITE_SERVER_URL
 const SignUp = ({ setUser }) => {
   const navigate = useNavigate();
 
@@ -69,7 +69,7 @@ const SignUp = ({ setUser }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch(`${URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

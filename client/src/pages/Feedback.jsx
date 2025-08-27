@@ -11,7 +11,7 @@ import {
   Sparkles,
   ArrowLeft,
 } from "lucide-react";
-
+const URL = import.meta.env.VITE_SERVER_URL
 function FeedbackPage() {
   const [isVisible, setIsVisible] = useState({});
   const [selectedType, setSelectedType] = useState("");
@@ -106,7 +106,7 @@ function FeedbackPage() {
         timestamp: new Date().toISOString(),
       };
 
-      const response = await fetch("http://localhost:5000/api/send-feedback", {
+      const response = await fetch(`${URL}/api/send-feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(feedbackData),

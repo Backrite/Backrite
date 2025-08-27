@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle, Code, Zap, Loader2, AlertCircle } from "lucide-react";
-
+const URL = import.meta.env.VITE_SERVER_URL
 const Dashboard = () => {
   // State management for data and loading states
   const [user, setUser] = useState(null);
@@ -18,7 +18,7 @@ const Dashboard = () => {
       console.log("Token found:", !!token); // Debug: Check if token exists
 
       // Call your existing dashboard endpoint
-      const response = await fetch("/api/dashboard", {
+      const response = await fetch(`${URL}/api/dashboard`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

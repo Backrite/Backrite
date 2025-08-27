@@ -24,7 +24,7 @@ const ProblemSolve = () => {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [showConstraints, setShowConstraints] = useState(true);
   const [showExamples, setShowExamples] = useState(true);
-
+const URL = import.meta.env.VITE_SERVER_URL
   const { slug } = useParams();
 
   // ✅ Protect the page: redirect if not logged in
@@ -40,7 +40,7 @@ const ProblemSolve = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch(`http://localhost:5000/api/problems/${slug}`, {
+    fetch(`${URL}/api/problems/${slug}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -99,7 +99,7 @@ const ProblemSolve = () => {
     setOutput("Running your code...\n");
 
     try {
-      const response = await fetch("http://localhost:5000/api/run", {
+      const response = await fetch(`${URL}/api/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,7 +139,7 @@ const ProblemSolve = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/submit", {
+      const response = await fetch(`${URL}/api/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

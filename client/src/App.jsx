@@ -11,7 +11,7 @@ import ProblemSolve from "./pages/ProblemSolve";
 import { Toaster } from "react-hot-toast";
 import Feedback from "./pages/Feedback";
 import toast from "react-hot-toast";
-
+const URL = import.meta.env.VITE_SERVER_URL
 function AppContent() {
   const [user, setUser] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -21,7 +21,7 @@ function AppContent() {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:5000/api/problems", {
+        const res = await fetch(`${URL}/api/problems`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
