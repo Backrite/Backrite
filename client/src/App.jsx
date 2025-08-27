@@ -1,3 +1,4 @@
+// src/App.js
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
@@ -10,19 +11,9 @@ import ProblemSolve from "./pages/ProblemSolve";
 import { Toaster } from "react-hot-toast";
 import Feedback from "./pages/Feedback";
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState(null);
   const [problems, setProblems] = useState([]);
-
-  // useEffect(() => {
-  //   fetch("http://localhost:5000/api/problems")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setProblems(data);
-  //       console.log("Problems fetched:", data); // log actual fetched data
-  //     })
-  //     .catch((err) => console.error(err));
-  // }, []);
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -66,7 +57,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <>
       <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         {/* All routes under shared Layout */}
@@ -85,6 +76,14 @@ function App() {
           <Route path="feedback" element={<Feedback />} />
         </Route>
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

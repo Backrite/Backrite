@@ -42,7 +42,14 @@ function Home() {
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
       <button
-        onClick={() => navigate("/signup")}
+        onClick={() =>{ 
+          const token = localStorage.getItem("token");
+      if (token) {
+        navigate("/dashboard"); // ✅ already logged in → go to dashboard
+      } else {
+        navigate("/signup"); // ❌ no token → go to signup
+      }
+    }}
         className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 flex items-center gap-2"
       >
         Start coding for free

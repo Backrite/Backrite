@@ -12,7 +12,7 @@ const Layout = ({ user, setUser }) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Check if current page is home to show newsletter
+  // ✅ Show footer only on homepage
   const isHomePage = location.pathname === "/" || location.pathname === "/home";
 
   return (
@@ -26,7 +26,8 @@ const Layout = ({ user, setUser }) => {
         </div>
       </main>
 
-      <Footer showNewsletter={isHomePage} />
+      {/* ✅ Render footer only on homepage */}
+      {isHomePage && <Footer showNewsletter />}
     </div>
   );
 };
