@@ -9,4 +9,4 @@ server/.env
 # build folders (if any)
 client/build
 node_modules
-server/container
+server/package-lock.json
