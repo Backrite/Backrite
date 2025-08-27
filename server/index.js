@@ -173,12 +173,16 @@ app.use(express.static("public"));
 
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "https://backrite-qgra.vercel.app",  // 👈 your frontend domain
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+
+// Explicitly handle preflight
+app.options("*", cors());
+
 
 // Routes
 app.use("/api/auth", authRoutes);
