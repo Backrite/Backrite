@@ -170,18 +170,31 @@ const app = express();
 // Middleware to parse JSON
 app.use(express.json());
 app.use(express.static("public"));
+app.use(bodyParser.json());
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://backrite-qgra.vercel.app",
+];
 
 app.use(
   cors({
-    origin: "https://backrite-qgra.vercel.app",  // 👈 your frontend domain
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-// Explicitly handle preflight
+// ✅ Handle preflight requests globally
 app.options("*", cors());
+
 
 
 // Routes
@@ -190,7 +203,7 @@ app.use("/api/problems", problemRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/submit", submitRoutes);
 app.use("/api/send-feedback", feedbackRoute);
-app.use(bodyParser.json());
+
 import { spawn } from "child_process";
 
 const ecsClient = new ECSClient({
