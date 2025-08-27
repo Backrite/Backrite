@@ -147,7 +147,6 @@ import submitRoutes from "./routes/submitRoutes.js";
 import cors from "cors";
 import errorHandler from "./middleware/errorHandler.js";
 import bodyParser from "body-parser";
-import serverless from "serverless-http";
 import {
   RunTaskCommand,
   ECSClient,
@@ -341,10 +340,9 @@ app.post("/api/run", async (req, res) => {
 });
 app.use(errorHandler);
 
-// const port = process.env.PORT || 5001;
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
+const port = process.env.PORT || 5001;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
 
-export default serverless(app);
