@@ -26,7 +26,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
     "nodemailer": "^7.0.5",
-    "postman-request": "^2.88.1-postman.43"
+    "postman-request": "^2.88.1-postman.43",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
