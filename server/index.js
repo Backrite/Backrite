@@ -136,7 +136,6 @@
 // });
 
 // import fs from "fs";
-import { exec } from "child_process";
 import dotenv from "dotenv";
 import express from "express";
 import connectDb from "./config/dbConnection.js";
@@ -147,10 +146,7 @@ import feedbackRoute from "./routes/feedback.js";
 import submitRoutes from "./routes/submitRoutes.js";
 import cors from "cors";
 import errorHandler from "./middleware/errorHandler.js";
-import path from "path";
-import { fileURLToPath } from "url";
 import bodyParser from "body-parser";
-import serverless from "serverless-http";
 import {
   RunTaskCommand,
   ECSClient,
@@ -344,9 +340,9 @@ app.post("/api/run", async (req, res) => {
 });
 app.use(errorHandler);
 
-// const port = process.env.PORT || 5001;
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
-export default serverless(app);
+const port = process.env.PORT || 5001;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
 
