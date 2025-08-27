@@ -49,7 +49,7 @@ app.use(bodyParser.json());
 
 
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.render();
 });
 
 
@@ -129,11 +129,11 @@ app.post("/api/run", async (req, res) => {
 app.use(errorHandler);
 
 
-if(process.env.NODE_ENV === "production"){
+
   const port = process.env.PORT || 5001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-}
+
 
 
