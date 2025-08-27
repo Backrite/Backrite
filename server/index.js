@@ -45,6 +45,16 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/submit", submitRoutes);
 app.use("/api/send-feedback", feedbackRoute);
 app.use(bodyParser.json());
+
+
+
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
+
+
+
+
 import { spawn } from "child_process";
 
 app.post("/api/run", async (req, res) => {
@@ -118,7 +128,12 @@ app.post("/api/run", async (req, res) => {
 
 app.use(errorHandler);
 
-const port = process.env.PORT || 5001;
+
+if(process.env.NODE_ENV === "production"){
+  const port = process.env.PORT || 5001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+}
+
+

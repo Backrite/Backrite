@@ -3,7 +3,6 @@ import User from "../models/User.js";
 export const getDashboard = async (req, res) => {
   try {
     const userId = req.user.id; // set by your validateToken middleware
-    console.log(userId);
 
     const user = await User.findById(userId)
       .populate("solvedProblems", "difficulty")

@@ -10,6 +10,7 @@ import Problems from "./pages/Problems";
 import ProblemSolve from "./pages/ProblemSolve";
 import { Toaster } from "react-hot-toast";
 import Feedback from "./pages/Feedback";
+import toast from "react-hot-toast";
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -36,9 +37,8 @@ function AppContent() {
 
         const data = await res.json();
         setProblems(Array.isArray(data) ? data : []);
-        console.log("Problems fetched:", data);
       } catch (err) {
-        console.error("Error fetching problems:", err);
+        toast.error("Error fetching problems:", err);
       }
     };
 
