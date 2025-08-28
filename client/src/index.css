@@ -3,6 +3,22 @@
 ::-webkit-scrollbar {
   display: none;
 }
+/* Split.js gutter styling */
+.gutter {
+  background-color: #334155; /* slate-700 */
+  background-repeat: no-repeat;
+  background-position: 50%;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  height: 100%;
+}
+
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  width: 100%;
+}
 
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

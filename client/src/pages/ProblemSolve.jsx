@@ -346,78 +346,77 @@ const URL = import.meta.env.VITE_SERVER_URL
           )}
         </div>
 
-        {/* Right Panel */}
-        <div className="md:w-1/2 flex flex-col">
-          <MonacoEditor
-            height="400px"
-            defaultLanguage="javascript"
-            theme="vs-dark"
-            value={code}
-            onChange={(value) => setCode(value)}
-            options={{
-              fontSize: 16,
-              minimap: { enabled: false },
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-            }}
-          />
+        {/* Right Panel - Fixed Layout */}
+        <div className="md:w-1/2 flex flex-col gap-4">
+          {/* Code Editor */}
+          <div className="h-80 bg-slate-800 p-2 rounded-lg">
+            <MonacoEditor
+              height="300px"
+              defaultLanguage="javascript"
+              theme="vs-dark"
+              value={code}
+              onChange={(value) => setCode(value)}
+              options={{
+                fontSize: 16,
+                minimap: { enabled: false },
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </div>
 
-          <div className="mt-2 bg-slate-900 p-4 rounded-lg text-gray-300 min-h-16 max-h-48 overflow-auto whitespace-pre-wrap">
+          {/* Output Section - Smaller */}
+          <div className="bg-slate-900 p-3 rounded-lg text-gray-300 h-20 overflow-auto whitespace-pre-wrap">
             {output || "Your output will appear here..."}
           </div>
 
-          {/* Test Results */}
-          {testResults.length > 0 && (
-            <div className="mt-2 bg-slate-800 p-4 rounded-lg text-gray-300 max-h-64 overflow-auto">
-              <h2 className="font-semibold text-white mb-3">Test Results</h2>
-              <p className="mb-3 text-sm text-gray-400">
-                {testResults.filter((t) => t.passed).length} /{" "}
-                {testResults.length} Testcases Passed
-              </p>
-              {testResults.map((result, idx) => (
-                <div
-                  key={idx}
-                  className={`border-l-4 pl-3 mb-3 ${
-                    result.passed ? "border-green-500" : "border-red-500"
-                  }`}
-                >
-                  <p className="mb-1">
-                    {result.passed ? "✅" : "❌"}{" "}
-                    <span className="font-semibold text-white">
-                      Test Case {result.index}{" "}
-                      {result.passed ? "Passed" : "Failed"}
-                    </span>
-                  </p>
-                  {result.input && (
+          {/* Test Results Section - Larger */}
+          <div className="bg-slate-800 p-4 rounded-lg text-gray-300 h-80 overflow-auto">
+            {testResults.length > 0 ? (
+              <>
+                <h2 className="font-semibold text-white mb-3">Test Results</h2>
+                <p className="mb-3 text-sm text-gray-400">
+                  {testResults.filter((t) => t.passed).length} / {testResults.length} Testcases Passed
+                </p>
+                {testResults.map((result, idx) => (
+                  <div
+                    key={idx}
+                    className={`border-l-4 pl-3 mb-3 ${
+                      result.passed ? "border-green-500" : "border-red-500"
+                    }`}
+                  >
+                    <p className="mb-1">
+                      {result.passed ? "✅" : "❌"}{" "}
+                      <span className="font-semibold text-white">
+                        Test Case {result.index} {result.passed ? "Passed" : "Failed"}
+                      </span>
+                    </p>
+                    {result.input && (
+                      <p>
+                        <span className="text-white font-medium">Input:</span>{" "}
+                        <code className="text-blue-300">{JSON.stringify(result.input)}</code>
+                      </p>
+                    )}
                     <p>
-                      <span className="text-white font-medium">Input:</span>{" "}
-                      <code className="text-blue-300">
-                        {JSON.stringify(result.input)}
-                      </code>
+                      <span className="text-white font-medium">Expected:</span>{" "}
+                      <code className="text-yellow-300">{JSON.stringify(result.expected)}</code>
                     </p>
-                  )}
-                  <p>
-                    <span className="text-white font-medium">Expected:</span>{" "}
-                    <code className="text-yellow-300">
-                      {JSON.stringify(result.expected)}
-                    </code>
-                  </p>
-                  <p>
-                    <span className="text-white font-medium">Actual:</span>{" "}
-                    <code className="text-purple-300">
-                      {JSON.stringify(result.actual)}
-                    </code>
-                  </p>
-                  {result.error && (
-                    <p className="text-red-400">
-                      <span className="text-white font-medium">Error:</span>{" "}
-                      {result.error}
+                    <p>
+                      <span className="text-white font-medium">Actual:</span>{" "}
+                      <code className="text-purple-300">{JSON.stringify(result.actual)}</code>
                     </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                    {result.error && (
+                      <p className="text-red-400">
+                        <span className="text-white font-medium">Error:</span> {result.error}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p className="text-gray-400">No test results yet.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
