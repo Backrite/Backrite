@@ -5,7 +5,7 @@ import { sendOtpEmail } from "../config/emailService.js";
 import userModel from "../models/User.js";
 import pendingUserModel from "../models/pendingUser.js";
 
-// @desc Register user (store in PendingUser)
+// @desc Register user 
 // @route POST /api/auth/register
 const registerAccount = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
