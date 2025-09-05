@@ -14,6 +14,22 @@ const userSchema = new Schema({
     type: String,
     required: [true, 'Password is required'],
   },
+  
+  // --- Fields for Email OTP Verification ---
+  
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailOtp: {
+    type: String,
+  },
+  emailOtpExpires: {
+    type: Date,
+  },
+  
+  // --- Your existing fields ---
+  
   solvedProblems: [
     {
       type: Schema.Types.ObjectId,
