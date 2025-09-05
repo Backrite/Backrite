@@ -15,15 +15,15 @@ export const sendOtpEmail = async (email, otp) => {
 
     // Define the email options
     const mailOptions = {
-      from: `"Your App Name" <${process.env.EMAIL_USER}>`,
+      from: `"Backrite" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Your One-Time Password (OTP)',
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2>Email Verification</h2>
           <p>Thank you for registering. Please use the following One-Time Password (OTP) to verify your email address.</p>
+          <p>This OTP is valid for 5 minutes.</p>
           <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">${otp}</p>
-          <p>This OTP is valid for 10 minutes.</p>
         </div>
       `,
     };
