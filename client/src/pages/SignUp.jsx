@@ -390,6 +390,14 @@ const SignUp = ({ setUser }) => {
                 <p className="mt-1 text-sm text-red-400">{errors.terms}</p>
               )}
             </div>
+            <div>
+              {/* API Errors */}
+              {errors.api && (
+                <div className="mb-4 p-3 rounded-lg bg-red-600/20 border border-red-500 text-red-400 text-sm">
+                  {errors.api}
+                </div>
+              )}
+            </div>
 
             {/* Submit */}
             <button
@@ -411,7 +419,26 @@ const SignUp = ({ setUser }) => {
 
         {/* Step 2: OTP Verification */}
         {step === 2 && (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 space-y-6 text-center">
+          <div className="relative bg-slate-800/50 border border-slate-700 rounded-xl p-8 space-y-6 text-center">
+            <button
+              onClick={() => setStep(1)}
+              className="absolute left-4 top-4 p-2 rounded-full bg-slate-700/70 hover:bg-slate-600 text-white transition shadow-md"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5L8.25 12l7.5-7.5"
+                />
+              </svg>
+            </button>
             <div className="flex gap-2 justify-center">
               {otp.map((digit, index) => (
                 <input
