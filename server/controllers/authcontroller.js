@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendOtpEmail } from "../config/emailService.js";
 import userModel from "../models/User.js";
-import pendingUserModel from "../models/pendingUser.js";
+import pendingUserModel from "../models/PendingUser.js";
 
 // @desc Register user 
 // @route POST /api/auth/register
