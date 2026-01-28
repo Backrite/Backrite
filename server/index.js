@@ -40,7 +40,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  })
+  }),
 );
 
 // Routes
@@ -74,7 +74,7 @@ async function waitForLogStream(
   logGroupName,
   logStreamName,
   logsClient,
-  timeout = 30000
+  timeout = 30000,
 ) {
   const startTime = Date.now();
   while (true) {
@@ -82,11 +82,11 @@ async function waitForLogStream(
       new DescribeLogStreamsCommand({
         logGroupName,
         logStreamNamePrefix: logStreamName,
-      })
+      }),
     );
 
     const found = resp.logStreams.find(
-      (ls) => ls.logStreamName === logStreamName
+      (ls) => ls.logStreamName === logStreamName,
     );
     if (found) return;
 
@@ -110,17 +110,17 @@ app.post("/api/run", async (req, res) => {
 
     // 1️⃣ Run ECS Task
     const runTaskCommand = new RunTaskCommand({
-      cluster:
-        "arn:aws:ecs:ap-south-1:211125305105:cluster/ideal-flamingo-p8ogwo",
-      taskDefinition: "backrite-taskdefinitions",
+      cluster: "arn:aws:ecs:ap-south-1:242258465577:cluster/backrite-cluster",
+      taskDefinition:
+        "arn:aws:ecs:ap-south-1:242258465577:task-definition/backrite-task:1",
       launchType: "FARGATE",
       networkConfiguration: {
         awsvpcConfiguration: {
-          securityGroups: ["sg-0805d984f9b76fe15"],
+          securityGroups: ["sg-00ccfb3689dfb8e66"],
           subnets: [
-            "subnet-011e5393cd4c9c625",
-            "subnet-09c2c7d8e19c995a2",
-            "subnet-02dd0c9384482e3df",
+            "subnet-0cc38c75bf02381d9",
+            "subnet-07c49c34f449f6161",
+            "subnet-07f9015759a64967d",
           ],
           assignPublicIp: "ENABLED",
         },
@@ -143,11 +143,7 @@ app.post("/api/run", async (req, res) => {
     const taskId = taskArn.split("/").pop();
     const logStreamName = `ecs/backrite-repo/${taskId}`;
 
-    await waitForLogStream(
-      "/ecs/backrite-taskdefinitions",
-      logStreamName,
-      logsClient
-    );
+    await waitForLogStream("/ecs/backrite-task", logStreamName, logsClient);
 
     // 2️⃣ Poll logs until task finishes
     let nextToken;
@@ -159,11 +155,11 @@ app.post("/api/run", async (req, res) => {
       // Fetch logs
       const logsResp = await logsClient.send(
         new GetLogEventsCommand({
-          logGroupName: "/ecs/backrite-taskdefinitions",
+          logGroupName: "/ecs/backrite-task",
           logStreamName,
           startFromHead: true,
           nextToken,
-        })
+        }),
       );
 
       logsResp.events.forEach((e) => {
@@ -175,9 +171,9 @@ app.post("/api/run", async (req, res) => {
       const describeResp = await ecsClient.send(
         new DescribeTasksCommand({
           cluster:
-            "arn:aws:ecs:ap-south-1:211125305105:cluster/ideal-flamingo-p8ogwo",
+            "arn:aws:ecs:ap-south-1:242258465577:cluster/backrite-cluster",
           tasks: [taskArn],
-        })
+        }),
       );
 
       const lastStatus = describeResp.tasks[0].lastStatus;
@@ -207,5 +203,3 @@ const port = process.env.PORT || 5001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-
