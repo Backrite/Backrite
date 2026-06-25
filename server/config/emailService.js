@@ -3,14 +3,18 @@ import nodemailer from 'nodemailer';
 // This function will send the OTP to the user's email address
 export const sendOtpEmail = async (email, otp) => {
   try {
-    // Configure the email transporter using your email provider's SMTP settings
-    // It's highly recommended to use environment variables for your credentials
+    // Configure the email transporter using explicit SMTP settings
+    // Required for Render deployment (Nodemailer's service: 'gmail' times out)
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // Or use another service like SendGrid, Mailgun, etc.
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 465,
+      secure: true, // use SSL for port 465
       auth: {
-        user: process.env.EMAIL_USER, // Your email address from .env file
-        pass: process.env.EMAIL_APP_PASSWORD, // Your email password or app-specific password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD,
       },
+      connectionTimeout: 5000,
+      socketTimeout: 5000,
     });
 
     // Define the email options
