@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Code, Menu, X } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Code2, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Header({ user, setUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,20 +10,19 @@ function Header({ user, setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Track scroll for header bg
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -32,99 +31,107 @@ function Header({ user, setUser }) {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser(null);
+    setShowDropdown(false);
+    setIsMenuOpen(false);
     navigate("/");
   };
 
   const navLinks = user
     ? [
         { name: "Problems", to: "/problems" },
-        { name: "Feedback", to: "/feedback" },
+        { name: "Dashboard", to: "/dashboard" },
       ]
     : [
         { name: "Home", to: "/" },
         { name: "Problems", to: "/problems" },
-        { name: "Feedback", to: "/feedback" },
       ];
+
+  const initials =
+    user?.username?.charAt(0)?.toUpperCase() ||
+    user?.email?.charAt(0)?.toUpperCase() ||
+    "U";
+  const hasBorder = scrollY > 8 || isMenuOpen;
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrollY > 20
-          ? "bg-gray-950/80 backdrop-blur-xl border-b border-gray-800/50"
-          : "bg-transparent"
+      className={`fixed top-0 z-50 w-full bg-white/90 backdrop-blur-xl transition ${
+        hasBorder ? "border-b border-slate-200 shadow-sm" : "border-b border-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="mx-auto max-w-7xl px-5 py-3 sm:px-6">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <Link
             to="/"
-            className="flex items-center space-x-3 group cursor-pointer"
+            className="flex items-center gap-2"
+            onClick={() => setIsMenuOpen(false)}
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center group-hover:shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
-              <Code className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-semibold text-white">BackRite</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white">
+              <Code2 className="h-5 w-5" />
+            </span>
+            <span className="text-xl font-semibold tracking-tight text-slate-950">
+              BackRite
+            </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-12">
+          <nav className="hidden items-center gap-7 lg:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.to}
-                className={`text-gray-300 hover:text-white text-lg font-medium transition-colors duration-200 relative group ${
+                className={`text-sm font-medium transition ${
                   location.pathname === link.to
-                    ? "text-white font-semibold"
-                    : ""
+                    ? "text-slate-950"
+                    : "text-slate-600 hover:text-slate-950"
                 }`}
               >
                 {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-200"></span>
               </Link>
             ))}
           </nav>
 
-          {/* Right Side */}
-          <div className="hidden lg:flex items-center space-x-4 relative">
+          <div className="hidden items-center gap-3 lg:flex">
             {!user ? (
               <>
                 <Link
                   to="/signin"
-                  className="text-gray-300 hover:text-white text-base font-medium transition-colors duration-200"
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
                 >
-                  Login
+                  Sign in
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-base font-medium transition-all duration-200"
+                  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Get started
                 </Link>
               </>
             ) : (
               <div className="relative" ref={dropdownRef}>
-                {/* Avatar Circle (click to toggle) */}
-                <div
-                  className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer"
-                  onClick={() => setShowDropdown(!showDropdown)}
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-950 shadow-sm transition hover:border-slate-300"
+                  onClick={() => setShowDropdown((current) => !current)}
+                  aria-label="Open account menu"
                 >
-                  {user.username ? user.username.charAt(0).toUpperCase() : "U"}
-                </div>
+                  {initials}
+                </button>
 
-                {/* Dropdown */}
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-44 bg-gray-900 border border-gray-700 rounded-md shadow-lg">
+                  <div className="absolute right-0 mt-3 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl">
                     <Link
                       to="/dashboard"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+                      onClick={() => setShowDropdown(false)}
                     >
+                      <LayoutDashboard className="h-4 w-4" />
                       Dashboard
                     </Link>
                     <button
+                      type="button"
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                     >
+                      <LogOut className="h-4 w-4" />
                       Logout
                     </button>
                   </div>
@@ -133,18 +140,64 @@ function Header({ user, setUser }) {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
           <button
-            className="lg:hidden p-2 text-gray-300 hover:text-white transition-colors duration-200"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            type="button"
+            className="rounded-lg border border-slate-200 bg-white p-2 text-slate-800 transition hover:bg-slate-50 lg:hidden"
+            onClick={() => setIsMenuOpen((current) => !current)}
+            aria-label="Toggle navigation"
           >
-            {isMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
+
+        {isMenuOpen && (
+          <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-xl lg:hidden">
+            <div className="grid gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.to}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`rounded-lg px-3 py-3 text-sm font-medium transition ${
+                    location.pathname === link.to
+                      ? "bg-slate-100 text-slate-950"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-3 border-t border-slate-200 pt-3">
+              {!user ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to="/signin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-lg border border-slate-200 px-3 py-3 text-center text-sm font-semibold text-slate-800"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="rounded-lg bg-slate-950 px-3 py-3 text-center text-sm font-semibold text-white"
+                  >
+                    Get started
+                  </Link>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-800"
+                >
+                  Logout
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

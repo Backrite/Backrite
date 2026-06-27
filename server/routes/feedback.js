@@ -1,10 +1,10 @@
-import express from "express";
-import { feedbackgenerator } from "../controllers/FeedbackController.js";
-import validateToken from "../middleware/validateToken.js"; // make sure path is correct
+// import express from "express";
+// import { feedbackgenerator } from "../controllers/FeedbackController.js";
+// import validateToken from "../middleware/validateToken.js"; // make sure path is correct
 
-const router = express.Router();
+// const router = express.Router();
 
-// Create new account
-router.post("/", feedbackgenerator);
+// // Create new account
+// router.post("/", feedbackgenerator);
 
-export default router;
+// export default router;

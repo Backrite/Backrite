@@ -11,7 +11,7 @@ const Problems = ({ problems }) => {
    useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/signup"); // redirect if not logged in
+      navigate("/signin");
     }
   }, [navigate]);
 

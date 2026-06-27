@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
 import express from "express";
 import connectDb from "./config/dbConnection.js";
+import passport from "passport";
+import "./config/passport.js";
 import authRoutes from "./routes/authroutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
-import feedbackRoute from "./routes/feedback.js";
+// import feedbackRoute from "./routes/feedback.js";
 import submitRoutes from "./routes/submitRoutes.js";
 import cors from "cors";
 import errorHandler from "./middleware/errorHandler.js";
@@ -19,6 +21,11 @@ import {
   CloudWatchLogsClient,
   GetLogEventsCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
+
+import dns from "node:dns";
+
+// Force Node to use Google DNS instead of 127.0.0.1
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 dotenv.config();
 connectDb();
 
@@ -33,6 +40,7 @@ const app = express();
 // Middleware to parse JSON
 app.use(express.json());
 app.use(express.static("public"));
+app.use(passport.initialize());
 
 app.use(
   cors({
@@ -48,7 +56,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/submit", submitRoutes);
-app.use("/api/send-feedback", feedbackRoute);
+// app.use("/api/send-feedback", feedbackRoute);
 app.use(bodyParser.json());
 import { spawn } from "child_process";
 

@@ -12,24 +12,23 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    select: false,
   },
-  
-  // --- Fields for Email OTP Verification ---
-  
   isEmailVerified: {
     type: Boolean,
-    default: false,
+    default: true,
   },
-  emailOtp: {
-    type: String,
-  },
-  emailOtpExpires: {
-    type: Date,
-  },
-  
-  // --- Your existing fields ---
-  
+  authProviders: [{
+    provider: {
+      type: String,
+      enum: ['google', 'github'],
+      required: true,
+    },
+    providerId: {
+      type: String,
+      required: true,
+    },
+  }],
   solvedProblems: [
     {
       type: Schema.Types.ObjectId,
@@ -43,5 +42,10 @@ const userSchema = new Schema({
     }
   ],
 }, { timestamps: true });
+
+userSchema.index(
+  { 'authProviders.provider': 1, 'authProviders.providerId': 1 },
+  { unique: true, sparse: true },
+);
 
 export default model('User', userSchema);

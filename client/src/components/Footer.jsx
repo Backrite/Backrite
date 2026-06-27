@@ -1,103 +1,81 @@
-// src/components/Footer.jsx
-import React from "react";
-import { Code, Linkedin, Instagram, MailIcon } from "lucide-react";
+import { Code2, Instagram, Linkedin, MailIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Footer() {
+  const socialLinks = [
+    {
+      icon: Instagram,
+      href: "https://www.instagram.com/hackxcelerate/",
+      label: "Instagram",
+    },
+    {
+      icon: MailIcon,
+      href: "mailto:hackxcelerate@gmail.com",
+      label: "Mail",
+    },
+    {
+      icon: Linkedin,
+      href: "https://www.linkedin.com/in/hackxcelerate-9b6409366/",
+      label: "LinkedIn",
+    },
+  ];
+
   return (
-    <footer className="bg-gray-950 border-t border-gray-800 mt-auto">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Top Section: Brand + Links + Contact */}
-        <div className="flex flex-col md:flex-row justify-between gap-12 mb-8">
-          {/* Brand Section */}
+    <footer className="mt-auto border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6">
+        <div className="flex flex-col justify-between gap-10 md:flex-row">
           <div className="max-w-md">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                <Code className="w-4 h-4 text-white" />
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950">
+                <Code2 className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-semibold text-white">BackRite</span>
+              <span className="text-lg font-semibold text-slate-950">BackRite</span>
             </div>
-            <p className="text-gray-400 leading-relaxed">
-              The premier platform for backend developers to master their craft
-              through real-world challenges and expert-guided learning paths.
+            <p className="text-sm leading-6 text-slate-600">
+              Backend practice problems, OAuth-secured progress, and a focused
+              coding workspace for developers building real systems.
             </p>
           </div>
 
-          {/* Platform Links */}
           <div>
-            <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">
-              Platform
-            </h4>
-            <div className="space-y-3">
-              <a
-                href="/problems"
-                className="block text-gray-400 hover:text-white transition-colors duration-200 text-sm"
-              >
+            <h4 className="mb-3 text-sm font-semibold text-slate-950">Platform</h4>
+            <div className="space-y-2">
+              <Link to="/problems" className="block text-sm text-slate-600 transition hover:text-slate-950">
                 Problems
-              </a>
-              <a
-                href="/dashboard"
-                className="block text-gray-400 hover:text-white transition-colors duration-200 text-sm"
-              >
+              </Link>
+              <Link to="/dashboard" className="block text-sm text-slate-600 transition hover:text-slate-950">
                 Dashboard
-              </a>
+              </Link>
             </div>
           </div>
 
-          {/* Contact Us */}
           <div>
-            <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">
-              Contact Us
-            </h4>
-            <div className="flex space-x-3">
-              {[
-                {
-                  icon: Instagram,
-                  href: "https://www.instagram.com/hackxcelerate/",
-                  label: "Instagram",
-                },
-                {
-                  icon: MailIcon,
-                  href: "mailto:hackxcelerate@gmail.com",
-                  label: "Mail",
-                },
-                {
-                  icon: Linkedin,
-                  href: "https://www.linkedin.com/in/hackxcelerate-9b6409366/",
-                  label: "LinkedIn",
-                },
-              ].map((social, index) => (
+            <h4 className="mb-3 text-sm font-semibold text-slate-950">Contact</h4>
+            <div className="flex gap-2">
+              {socialLinks.map((social) => (
                 <a
-                  key={index}
+                  key={social.label}
                   href={social.href}
                   aria-label={social.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-200 border border-gray-700/50 hover:border-gray-600/50"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white transition hover:bg-slate-50"
                 >
-                  <social.icon className="w-4 h-4 text-gray-400" />
+                  <social.icon className="h-4 w-4 text-slate-600" />
                 </a>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-400 text-sm">
-            © 2025 BackRite. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(
-              (link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
-                >
-                  {link}
-                </a>
-              )
-            )}
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 md:flex-row">
+          <p className="text-sm text-slate-500">Copyright 2026 BackRite. All rights reserved.</p>
+          <div className="flex gap-5">
+            {["Privacy", "Terms", "Cookies"].map((link) => (
+              <a key={link} href="#" className="text-sm text-slate-500 transition hover:text-slate-950">
+                {link}
+              </a>
+            ))}
           </div>
         </div>
       </div>

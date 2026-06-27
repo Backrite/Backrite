@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+const URL = import.meta.env.VITE_SERVER_URL;
+
 const ProblemSolve = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState("// Write your code here...");
@@ -24,14 +26,13 @@ const ProblemSolve = () => {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [showConstraints, setShowConstraints] = useState(true);
   const [showExamples, setShowExamples] = useState(true);
-const URL = import.meta.env.VITE_SERVER_URL
   const { slug } = useParams();
 
   // ✅ Protect the page: redirect if not logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/signup");
+      navigate("/signin");
     }
   }, [navigate]);
 
@@ -47,7 +48,7 @@ const URL = import.meta.env.VITE_SERVER_URL
     })
       .then((res) => {
         if (res.status === 401) {
-          navigate("/signup"); // redirect if token invalid
+          navigate("/signin");
           return null;
         }
         return res.json();
@@ -135,7 +136,7 @@ const URL = import.meta.env.VITE_SERVER_URL
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/signup");
+        navigate("/signin");
         return;
       }
 

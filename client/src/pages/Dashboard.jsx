@@ -1,6 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { CheckCircle, Code, Zap, Loader2, AlertCircle } from "lucide-react";
-const URL = import.meta.env.VITE_SERVER_URL
+const URL = import.meta.env.VITE_SERVER_URL;
+
+const generateMockProblems = (dashboardData) => {
+  const mockProblems = [];
+  let problemId = 1;
+
+  Object.entries(dashboardData.difficultyStats).forEach(
+    ([difficulty, solvedCount]) => {
+      for (let i = 0; i < solvedCount; i++) {
+        mockProblems.push({
+          id: problemId++,
+          title: `${difficulty} Problem ${i + 1}`,
+          description: `A ${difficulty.toLowerCase()} coding challenge`,
+          difficulty,
+          completed: true,
+          points:
+            difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
+        });
+      }
+
+      const unsolvedCount =
+        difficulty === "Easy" ? 3 : difficulty === "Medium" ? 2 : 1;
+      for (let i = 0; i < unsolvedCount; i++) {
+        mockProblems.push({
+          id: problemId++,
+          title: `${difficulty} Problem ${solvedCount + i + 1}`,
+          description: `A ${difficulty.toLowerCase()} coding challenge`,
+          difficulty,
+          completed: false,
+          points:
+            difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
+        });
+      }
+    }
+  );
+
+  return mockProblems;
+};
+
 const Dashboard = () => {
   // State management for data and loading states
   const [user, setUser] = useState(null);
@@ -9,7 +47,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   // Fetch dashboard data from your backend
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -30,8 +68,7 @@ const Dashboard = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Redirect user to signup if not logged in
-          window.location.href = "/signup";
+          window.location.href = "/signin";
           return; // stop further execution
         }
         throw new Error(`Failed to fetch dashboard data: ${response.status}`);
@@ -60,54 +97,12 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to generate mock problems based on your backend data
-  // Replace this with actual problems fetching if you have the data
-  const generateMockProblems = (dashboardData) => {
-    const mockProblems = [];
-    let problemId = 1;
-
-    // Generate problems based on difficulty stats
-    Object.entries(dashboardData.difficultyStats).forEach(
-      ([difficulty, solvedCount]) => {
-        // Add solved problems
-        for (let i = 0; i < solvedCount; i++) {
-          mockProblems.push({
-            id: problemId++,
-            title: `${difficulty} Problem ${i + 1}`,
-            description: `A ${difficulty.toLowerCase()} coding challenge`,
-            difficulty,
-            completed: true,
-            points:
-              difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
-          });
-        }
-
-        // Add a few unsolved problems for each difficulty
-        const unsolvedCount =
-          difficulty === "Easy" ? 3 : difficulty === "Medium" ? 2 : 1;
-        for (let i = 0; i < unsolvedCount; i++) {
-          mockProblems.push({
-            id: problemId++,
-            title: `${difficulty} Problem ${solvedCount + i + 1}`,
-            description: `A ${difficulty.toLowerCase()} coding challenge`,
-            difficulty,
-            completed: false,
-            points:
-              difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
-          });
-        }
-      }
-    );
-
-    return mockProblems;
-  };
+  }, []);
 
   // Fetch dashboard data on component mount
   useEffect(() => {
     fetchDashboardData();
-  }, []); // Empty dependency array means this runs once on mount
+  }, [fetchDashboardData]);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -123,7 +118,6 @@ const Dashboard = () => {
   };
 
   const completedProblems = problems?.filter((p) => p.completed) || [];
-  const inProgressProblems = problems?.filter((p) => !p.completed) || [];
 
   // Loading state
   if (loading) {
