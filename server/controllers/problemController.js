@@ -1,13 +1,27 @@
 // controllers/problem.controller.js
 import Problem from "../models/Problem.js";
+import User from "../models/User.js";
 
 // @desc    Get all problems (hide test cases)
 // @route   GET /problems
 export const getAllProblems = async (req, res) => {
   try {
-    // sort by createdAt ascending (oldest first → insertion order)
-    const problems = await Problem.find({}).sort({  _id: 1 });
-    res.json(problems);
+    const problems = await Problem.find({}).sort({ _id: 1 });
+    
+    // Check user's completed problems
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    const solvedIds = new Set(user?.solvedProblems?.map(id => id.toString()) || []);
+
+    const problemsWithStatus = problems.map(problem => {
+      const pObj = problem.toObject();
+      return {
+        ...pObj,
+        completed: solvedIds.has(pObj._id.toString())
+      };
+    });
+
+    res.json(problemsWithStatus);
   } catch (err) {
     res.status(500).json({ error: "Server error while fetching problems" });
   }

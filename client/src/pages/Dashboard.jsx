@@ -1,149 +1,314 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { CheckCircle, Code, Zap, Loader2, AlertCircle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  CheckCircle,
+  XCircle,
+  Calendar,
+  Loader2,
+  AlertCircle,
+  Code2,
+  ChevronRight,
+  Flame,
+  TrendingUp,
+  Play
+} from "lucide-react";
+
 const URL = import.meta.env.VITE_SERVER_URL;
 
-const generateMockProblems = (dashboardData) => {
-  const mockProblems = [];
-  let problemId = 1;
-
-  Object.entries(dashboardData.difficultyStats).forEach(
-    ([difficulty, solvedCount]) => {
-      for (let i = 0; i < solvedCount; i++) {
-        mockProblems.push({
-          id: problemId++,
-          title: `${difficulty} Problem ${i + 1}`,
-          description: `A ${difficulty.toLowerCase()} coding challenge`,
-          difficulty,
-          completed: true,
-          points:
-            difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
-        });
-      }
-
-      const unsolvedCount =
-        difficulty === "Easy" ? 3 : difficulty === "Medium" ? 2 : 1;
-      for (let i = 0; i < unsolvedCount; i++) {
-        mockProblems.push({
-          id: problemId++,
-          title: `${difficulty} Problem ${solvedCount + i + 1}`,
-          description: `A ${difficulty.toLowerCase()} coding challenge`,
-          difficulty,
-          completed: false,
-          points:
-            difficulty === "Easy" ? 50 : difficulty === "Medium" ? 100 : 200,
-        });
-      }
-    }
-  );
-
-  return mockProblems;
-};
-
 const Dashboard = () => {
-  // State management for data and loading states
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [problems, setProblems] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [problemsList, setProblemsList] = useState([]);
+  const [showAllSubmissions, setShowAllSubmissions] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const heatmapRef = useRef(null);
 
-  // Fetch dashboard data from your backend
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const token = localStorage.getItem("token");
-      console.log("Token found:", !!token); // Debug: Check if token exists
-
-      // Call your existing dashboard endpoint
-      const response = await fetch(`${URL}/api/dashboard`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log("📡 API Response status:", response.status); // Debug: Check response status
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/signin";
-          return; // stop further execution
-        }
-        throw new Error(`Failed to fetch dashboard data: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("📊 Dashboard data received:", data); // Debug: Check received data
-
-      // Set user data from the response
-      setUser({
-        username: data.username,
-        totalSolved: data.totalSolved,
-        totalAttempted: data.totalAttempted,
-        difficultyStats: data.difficultyStats,
-        streak: data.streak || 0, // use backend streak if available
-      });
-
-      console.log("✅ User state updated"); // Debug: Confirm state update
-
-      // Create mock problems array based on your backend data
-      // You can replace this with actual problems data if you have a separate endpoint
-      setProblems(generateMockProblems(data));
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Fetch dashboard data on component mount
+  // Fetch stats, submissions and problems
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/signin");
+      return;
+    }
+
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${URL}/api/dashboard`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            navigate("/signin");
+            return;
+          }
+          throw new Error("Failed to load dashboard data");
+        }
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchAllSubmissions = async () => {
+      try {
+        const res = await fetch(`${URL}/api/submit`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSubmissions(data);
+        }
+      } catch (err) {
+        console.error("Error loading submissions:", err);
+      } finally {
+        setSubmissionsLoading(false);
+      }
+    };
+
+    const fetchProblemsList = async () => {
+      try {
+        const res = await fetch(`${URL}/api/problems`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setProblemsList(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error loading problems:", err);
+      }
+    };
+
+    fetchStats();
+    fetchAllSubmissions();
+    fetchProblemsList();
+  }, [navigate]);
+
+  // Auto-scroll heatmap to the far right after DOM paint
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (heatmapRef.current) {
+        heatmapRef.current.scrollLeft = heatmapRef.current.scrollWidth;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [submissions, loading]);
+
+  // Get count of submissions grouped by local YYYY-MM-DD string
+  const getSubmissionsCountMap = () => {
+    const map = {};
+    submissions.forEach((sub) => {
+      const d = new Date(sub.submittedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate()
+      ).padStart(2, "0")}`;
+      map[key] = (map[key] || 0) + 1;
+    });
+    return map;
+  };
+
+  const submissionsCountMap = getSubmissionsCountMap();
+
+  // Get color scale matching GitHub/LeetCode shades of green
+  const getHeatmapColor = (count) => {
+    if (!count || count === 0) return "bg-[#161618]"; // empty dark
+    if (count <= 2) return "bg-[#0e4429]"; // light green
+    if (count <= 4) return "bg-[#006d32]"; // medium green
+    if (count <= 6) return "bg-[#26a641]"; // active green
+    return "bg-[#39d353]"; // brightest green
+  };
+
+  // Generate LeetCode Activity Heatmap (53 weeks) with month labels
+  const renderHeatmap = () => {
+    const today = new Date();
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    
+    // Start exactly 53 weeks ago on the preceding Sunday
+    const startDay = new Date();
+    startDay.setDate(today.getDate() - 364);
+    const startDayOfWeek = startDay.getDay();
+    startDay.setDate(startDay.getDate() - startDayOfWeek);
+
+    const weeks = [];
+    let currentDay = new Date(startDay);
+
+    for (let w = 0; w < 53; w++) {
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const dateStr = `${currentDay.getFullYear()}-${String(
+          currentDay.getMonth() + 1
+        ).padStart(2, "0")}-${String(currentDay.getDate()).padStart(2, "0")}`;
+        
+        const count = submissionsCountMap[dateStr] || 0;
+        const isFuture = currentDay > today;
+
+        days.push({
+          dateStr,
+          count,
+          isFuture,
+          month: currentDay.getMonth(),
+          day: currentDay.getDate(),
+          formattedDate: currentDay.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+          })
+        });
+        
+        currentDay.setDate(currentDay.getDate() + 1);
+      }
+      weeks.push(days);
+    }
+
+    // Filter out any weeks that are entirely in the future
+    const activeWeeks = weeks.filter(week => week.some(day => !day.isFuture));
+
+    // Build month labels: show label on the first week where a new month appears
+    // Skip if less than 4 weeks since last label to prevent overlapping
+    const monthLabels = [];
+    let lastMonth = -1;
+    let lastLabelIdx = -10;
+    activeWeeks.forEach((week, wIdx) => {
+      const firstDayMonth = week[0].month;
+      if (firstDayMonth !== lastMonth && wIdx - lastLabelIdx >= 4) {
+        monthLabels.push({ wIdx, label: monthNames[firstDayMonth] });
+        lastMonth = firstDayMonth;
+        lastLabelIdx = wIdx;
+      } else if (firstDayMonth !== lastMonth) {
+        lastMonth = firstDayMonth;
+      }
+    });
+
+    return (
+      <div
+        ref={heatmapRef}
+        className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 select-none"
+      >
+        <div className="inline-flex flex-col min-w-min">
+          {/* Month labels row */}
+          <div className="flex gap-1 mb-1.5 h-4">
+            {activeWeeks.map((_, wIdx) => {
+              const ml = monthLabels.find(m => m.wIdx === wIdx);
+              return (
+                <div key={wIdx} className="shrink-0 w-[11px] relative h-full">
+                  {ml ? (
+                    <span className="absolute top-0 left-0 text-[10px] text-[#737373] font-medium whitespace-nowrap">{ml.label}</span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+          {/* Grid */}
+          <div className="flex gap-1">
+            {activeWeeks.map((week, wIdx) => (
+              <div key={wIdx} className="flex flex-col gap-1 shrink-0">
+                {week.map((day, dIdx) => (
+                  <div key={dIdx} className="relative group">
+                    <div
+                      className={`w-[11px] h-[11px] rounded-[2px] transition-all duration-150 ${
+                        day.isFuture ? "opacity-0 pointer-events-none" : getHeatmapColor(day.count)
+                      }`}
+                    />
+                    
+                    {!day.isFuture && (
+                      <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover:block bg-[#1f1f1f] border border-[#262626] text-white text-[10px] font-mono px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none shadow-xl ${
+                        dIdx < 2 ? "top-full mt-1.5" : "bottom-full mb-1.5"
+                      }`}>
+                        {day.count === 0 ? "No" : day.count} submission{day.count !== 1 ? "s" : ""} on {day.formattedDate}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Get 3 recommended unsolved problems
+  const getRecommendedProblems = () => {
+    const solvedIds = new Set(
+      submissions.filter((s) => s.status === "passed" && s.problem).map((s) => s.problem._id)
+    );
+    const unsolved = problemsList.filter((p) => !solvedIds.has(p._id) && !p.completed);
+    return unsolved.slice(0, 3);
+  };
+
+  const recommendedProblems = getRecommendedProblems();
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case "Easy":
-        return "text-green-400 bg-green-400/10";
+        return "text-emerald-450";
       case "Medium":
-        return "text-yellow-400 bg-yellow-400/10";
+        return "text-amber-450";
       case "Hard":
-        return "text-red-400 bg-red-400/10";
+        return "text-rose-450";
       default:
-        return "text-gray-400 bg-gray-400/10";
+        return "text-[#525252]";
     }
   };
 
-  const completedProblems = problems?.filter((p) => p.completed) || [];
+  const getDifficultyBadgeBg = (difficulty) => {
+    switch (difficulty) {
+      case "Easy":
+        return "bg-emerald-500/10 border-emerald-500/20";
+      case "Medium":
+        return "bg-amber-500/10 border-amber-500/20";
+      case "Hard":
+        return "bg-rose-500/10 border-rose-500/20";
+      default:
+        return "bg-white/5 border-white/10";
+    }
+  };
 
-  // Loading state
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center text-white">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">Loading your dashboard...</p>
+          <Loader2 className="w-8 h-8 text-[#525252] animate-spin mx-auto mb-4" />
+          <p className="text-[#525252] text-sm font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">
-            Error Loading Dashboard
-          </h2>
-          <p className="text-gray-400 mb-4">{error}</p>
+      <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center text-white p-6">
+        <div className="text-center max-w-sm">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-[#fafafa] mb-2">Error Loading Dashboard</h2>
+          <p className="text-xs text-[#737373] mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#262626] text-xs font-semibold text-[#fafafa] hover:border-[#404040]"
           >
             Retry
           </button>
@@ -152,180 +317,213 @@ const Dashboard = () => {
     );
   }
 
+  const displayedSubmissions = showAllSubmissions
+    ? submissions
+    : submissions.slice(0, 5);
+
+  const solvedPercentage = user?.totalSolved
+    ? Math.round((user.totalSolved / (user.totalSolved + user.totalAttempted || 1)) * 100)
+    : 0;
+
+  const totalSubmissions = submissions.length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back, {user?.username || user?.name || "User"}!
-          </h1>
-          <p className="text-gray-400">
-            Ready to tackle some backend challenges?
-          </p>
+    <main className="min-h-screen bg-[#0c0c0c] text-[#fafafa] w-full pt-14 pb-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
+        
+        {/* LEFT COLUMN: Profile and Solved statistics (LeetCode-style Circular Ring) */}
+        <div className="space-y-6">
+          {/* Profile Details Card */}
+          <div className="rounded-xl border border-[#1f1f1f] bg-[#141414] p-5 flex flex-col items-center text-center">
+            <div className="h-16 w-16 rounded-full border border-[#262626] bg-[#0c0c0c] flex items-center justify-center text-[#fafafa] text-2xl font-bold select-none mb-3">
+              {user?.username?.charAt(0).toUpperCase()}
+            </div>
+            <h2 className="text-lg font-bold tracking-tight text-[#fafafa]">{user?.username}</h2>
+            <p className="text-[11px] text-[#525252] font-mono mt-0.5">DEVELOPER</p>
+
+            <div className="flex items-center gap-1.5 bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full border border-amber-500/15 text-xs font-mono font-bold mt-4 select-none">
+              <Flame className="w-3.5 h-3.5 fill-current animate-pulse" />
+              <span>{user?.streak || 0}d Streak</span>
+            </div>
+          </div>
+
+          {/* Solved Statistics Progress Ring (LeetCode-style) */}
+          <div className="rounded-xl border border-[#1f1f1f] bg-[#141414] p-5 space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252] flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Solved Breakdown
+            </h3>
+
+            {/* Circular Progress Gauge */}
+            <div className="flex items-center justify-center py-2">
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="46"
+                    className="stroke-[#1f1f1f]"
+                    strokeWidth="6"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="46"
+                    className="stroke-[#10b981] transition-all duration-500"
+                    strokeWidth="6"
+                    fill="transparent"
+                    strokeDasharray={2 * Math.PI * 46}
+                    strokeDashoffset={2 * Math.PI * 46 * (1 - (solvedPercentage / 100 || 0))}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute text-center">
+                  <div className="text-2xl font-bold text-[#fafafa] font-mono">{user?.totalSolved || 0}</div>
+                  <div className="text-[10px] text-[#525252] uppercase font-semibold tracking-wider">Solved</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Difficulty List */}
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center bg-[#0c0c0c] border border-[#1f1f1f] rounded-lg px-3 py-1.5">
+                <span className="text-emerald-400 font-medium">Easy</span>
+                <span className="font-mono text-white/70 font-semibold">{user?.difficultyStats?.Easy || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0c0c0c] border border-[#1f1f1f] rounded-lg px-3 py-1.5">
+                <span className="text-amber-400 font-medium">Medium</span>
+                <span className="font-mono text-white/70 font-semibold">{user?.difficultyStats?.Medium || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-[#0c0c0c] border border-[#1f1f1f] rounded-lg px-3 py-1.5">
+                <span className="text-rose-400 font-medium">Hard</span>
+                <span className="font-mono text-white/70 font-semibold">{user?.difficultyStats?.Hard || 0}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-green-500/50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  {user?.totalSolved || 0}
-                </div>
-                <div className="text-gray-400">Problems Solved</div>
-              </div>
+        {/* RIGHT COLUMN: Heatmap, Target Suggestions & Submissions */}
+        <div className="space-y-6 min-w-0">
+          
+          {/* Heatmap Grid */}
+          <div className="rounded-xl border border-[#1f1f1f] bg-[#141414] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                Submission Calendar
+              </h3>
+              <span className="text-xs text-[#737373] font-mono">
+                {totalSubmissions} submission{totalSubmissions !== 1 ? "s" : ""}
+              </span>
             </div>
+            {renderHeatmap()}
           </div>
 
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-yellow-500/50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                <Code className="w-6 h-6 text-yellow-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  0
-                  {/* {(user?.totalAttempted || 0) - (user?.totalSolved || 0)} */}
-                </div>
-                <div className="text-gray-400">In Progress</div>
-              </div>
-            </div>
-          </div>
+          {/* Target Recommendations Card (Replaces Badges and Skills lists) */}
+          <div className="rounded-xl border border-[#1f1f1f] bg-[#141414] p-5 space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252] flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-brand" />
+              Recommended Challenges
+            </h3>
 
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-purple-500/50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <Zap className="w-6 h-6 text-purple-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  0{/* {user?.streak || 0} */}
-                </div>
-                <div className="text-gray-400">Day Streak</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">
-            Recent Activity
-          </h2>
-          <div className="space-y-4">
-            {problems?.slice(0, 5).map((problem) => (
-              <div
-                key={problem.id}
-                className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
+            {recommendedProblems.length === 0 ? (
+              <p className="text-xs text-[#737373] py-2">
+                All challenges solved! You are fully up-to-date.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recommendedProblems.map((prob) => (
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      problem.completed ? "bg-green-500/20" : "bg-gray-500/20"
-                    }`}
+                    key={prob._id}
+                    onClick={() => navigate(`/solve/${prob.slug}`)}
+                    className="group border border-[#1f1f1f] bg-[#0c0c0c] hover:border-[#262626] rounded-lg p-4 flex flex-col justify-between cursor-pointer transition-all hover:bg-[#141414]"
                   >
-                    {problem.completed ? (
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                    ) : (
-                      <Code className="w-5 h-5 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-medium text-white">
-                      {problem.title}
+                    <div>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getDifficultyColor(prob.difficulty)} ${getDifficultyBadgeBg(prob.difficulty)}`}>
+                        {prob.difficulty}
+                      </span>
+                      <h4 className="text-sm font-semibold mt-2.5 text-[#e5e5e5] group-hover:text-white transition-colors truncate">
+                        {prob.title}
+                      </h4>
+                      <p className="text-[11px] text-[#525252] mt-1 line-clamp-2">
+                        {prob.description}
+                      </p>
                     </div>
-                    <div className="text-sm text-gray-400">
-                      {problem.description}
+
+                    <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-white/40 group-hover:text-white transition-all">
+                      <span>Solve Challenge</span>
+                      <Play className="w-3 h-3 fill-current" />
                     </div>
                   </div>
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
-                    problem.difficulty
-                  )}`}
-                >
-                  {problem.difficulty}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
 
-          {problems.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-400">No problems available yet.</p>
-            </div>
-          )}
+          {/* Submissions list */}
+          <div className="rounded-xl border border-[#1f1f1f] bg-[#141414] p-5 space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252] flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5" />
+              Submission Log
+            </h3>
+
+            {submissionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-[#525252] animate-spin" />
+              </div>
+            ) : submissions.length === 0 ? (
+              <p className="text-xs text-[#737373] text-center py-6">No submissions recorded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {displayedSubmissions.map((sub) => (
+                  <div
+                    key={sub._id}
+                    onClick={() => sub.problem && navigate(`/solve/${sub.problem.slug}`)}
+                    className="flex items-center justify-between p-3.5 rounded-lg border border-[#1f1f1f] bg-[#0c0c0c] hover:border-[#262626] hover:bg-[#141414] cursor-pointer transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      {sub.status === "passed" ? (
+                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                      )}
+                      <div>
+                        <span className="text-sm font-semibold text-[#fafafa] group-hover:text-white transition-colors">
+                          {sub.problem?.title || "Deleted Problem"}
+                        </span>
+                        <div className="flex items-center gap-3 mt-1 text-[10px] text-[#525252] font-mono">
+                          <span>{formatDate(sub.submittedAt)}</span>
+                          {sub.problem && (
+                            <span className={getDifficultyColor(sub.problem.difficulty)}>
+                              {sub.problem.difficulty}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#404040] group-hover:text-[#fafafa] transition-all" />
+                  </div>
+                ))}
+
+                {submissions.length > 5 && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => setShowAllSubmissions(!showAllSubmissions)}
+                      className="px-4 py-1.5 rounded-lg border border-[#262626] hover:border-[#404040] text-xs font-semibold text-[#a3a3a3] hover:text-[#fafafa] transition-colors cursor-pointer select-none"
+                    >
+                      {showAllSubmissions ? "Show Less" : "View all submissions"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
 
-        {/* Progress Overview */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Difficulty Breakdown
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-green-400">Easy</span>
-                <span className="text-gray-300">
-                  {user?.difficultyStats?.Easy || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-yellow-400">Medium</span>
-                <span className="text-gray-300">
-                  {user?.difficultyStats?.Medium || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-red-400">Hard</span>
-                <span className="text-gray-300">
-                  {user?.difficultyStats?.Hard || 0}
-                </span>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-700">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Total Attempted</span>
-                <span className="text-white">{user?.totalSolved || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Achievement Points
-            </h3>
-            <div className="text-3xl font-bold text-white mb-2">
-              {completedProblems.reduce(
-                (total, problem) => total + (problem.points || 0),
-                0
-              )}
-            </div>
-            <div className="text-gray-400">Total points earned</div>
-            <div className="mt-4 w-full bg-slate-700 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.min(
-                    (completedProblems.length / (problems?.length || 1)) * 100,
-                    100
-                  )}%`,
-                }}
-              ></div>
-            </div>
-            <div className="text-sm text-gray-400 mt-2">
-              {Math.round(
-                (completedProblems.length / (problems?.length || 1)) * 100
-              )}
-              % Complete
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
+    </main>
   );
 };
 

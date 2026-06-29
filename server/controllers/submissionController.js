@@ -60,3 +60,42 @@ export const submitSolution = async (req, res) => {
     });
   }
 };
+
+// Get all submissions for a specific problem by the logged-in user
+export const getSubmissions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { problemId } = req.params;
+
+    const submissions = await Submission.find({
+      user: userId,
+      problem: problemId,
+    }).sort({ submittedAt: -1 }); // newest first
+
+    res.status(200).json(submissions);
+  } catch (error) {
+    console.error("Get submissions error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Get all submissions of the logged-in user (across all problems)
+export const getAllUserSubmissions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const submissions = await Submission.find({ user: userId })
+      .populate("problem", "title slug difficulty tags")
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json(submissions);
+  } catch (error) {
+    console.error("Get all user submissions error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
